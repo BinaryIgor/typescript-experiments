@@ -1,0 +1,26 @@
+{
+  "name": "typescript-experiments",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha -r ts-node/register 'test/**/*.test.ts'",
+    "test:file": "mocha --require ts-node/register test/**/$file.test.ts --exit",
+    "build": "tsc",
+    "build:run:experiments": "tsc && node dist/experiments.js"
+  },
+  "author": "Igor Roztropiński",
+  "license": "ISC",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": { },
+  "devDependencies": {
+    "typescript": "^4.9.5",
+    "ts-node": "^10.9.1",
+    "@types/mocha": "^10.0.1",
+    "@types/chai": "^4.3.4",
+    "chai": "^4.2.0",
+    "mocha": "^7.1.0"
+  }
+}
