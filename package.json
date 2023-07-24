@@ -7,7 +7,8 @@
     "test": "mocha -r ts-node/register 'test/**/*.test.ts'",
     "test:file": "mocha --require ts-node/register test/**/$file.test.ts --exit",
     "build": "tsc",
-    "build:run:experiments": "tsc && node dist/experiments.js"
+    "build:run:experiments": "tsc && node dist/experiments.js",
+    "build:run:htmx-app": "tsc && cp -r src/htmx-app/static dist/htmx-app && node dist/htmx-app/app.js"
   },
   "author": "Igor Roztropiński",
   "license": "ISC",
@@ -18,6 +19,7 @@
   "devDependencies": {
     "typescript": "^4.9.5",
     "ts-node": "^10.9.1",
+    "@types/node": "^20.4.4",
     "@types/mocha": "^10.0.1",
     "@types/chai": "^4.3.4",
     "chai": "^4.2.0",
