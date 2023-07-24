@@ -1,31 +1,40 @@
-import http from "http";
 import fs from "fs";
 import path from "path";
+import bodyParser from "body-parser";
+import express, { Request, Response } from "express";
 
 const HTMX_SRC = "https://unpkg.com/htmx.org@1.9.3";
 
-const server = http.createServer();
+const SERVER_PORT = 8080;
 
-server.on("request", async (req: http.IncomingMessage, res: http.ServerResponse) => {
+const app = express();
+
+app.use(bodyParser.urlencoded());
+
+app.get("*", async (req: Request, res: Response) => {
+    console.log("REq body...", req.body);
     if (req.url?.includes("style")) {
         returnCss(res, await staticFileContent("style.css"));
-    } else if(req.url?.includes("search-authors")) {
-        returnHtml(res, `<div>Some html to swap</div>`);
-    }  else {
+    } else {
         returnHomePage(res);
     }
+})
+
+app.post("/search-authors", (req: Request, res: Response) => {
+    console.log("Searching fo authors...", req.body);
+    returnHtml(res, `<div>Some html to swap</div`);
 });
 
 function staticFileContent(filename: string): Promise<string> {
     return fs.promises.readFile(path.join(__dirname, "static", filename), 'utf-8');
 }
 
-async function returnCss(res: http.ServerResponse, css: string) {
-    res.setHeader("content-type", "text/css");
-    res.end(css);
+async function returnCss(res: Response, css: string) {
+    res.contentType("text/css");
+    res.send(css);
 }
 
-function returnHomePage(res: http.ServerResponse) {
+function returnHomePage(res: Response) {
     const authors = ["Friedrich Nietzsche", "Jordan Peterson", "Saifedean Ammous"];
 
     const authorsList = authors.map(a => `<li>${a}</li>`).join("\n");
@@ -67,10 +76,11 @@ function returnHomePage(res: http.ServerResponse) {
     returnHtml(res, homePage);
 }
 
-function returnHtml(res: http.ServerResponse, html: string) {
-    res.setHeader("content-type", "text/html");
-    // res.setHeader("")
-    res.end(html);
+function returnHtml(res: Response, html: string) {
+    res.contentType("text/html");
+    res.send(html);
 }
 
-server.listen(8080);
+app.listen(SERVER_PORT, () => {
+    console.log(`Server started on ${SERVER_PORT}`);
+});
