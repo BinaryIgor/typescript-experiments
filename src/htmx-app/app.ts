@@ -2,12 +2,16 @@ import http from "http";
 import fs from "fs";
 import path from "path";
 
+const HTMX_SRC = "https://unpkg.com/htmx.org@1.9.3";
+
 const server = http.createServer();
 
 server.on("request", async (req: http.IncomingMessage, res: http.ServerResponse) => {
     if (req.url?.includes("style")) {
         returnCss(res, await staticFileContent("style.css"));
-    } else {
+    } else if(req.url?.includes("search-authors")) {
+        returnHtml(res, `<div>Some html to swap</div>`);
+    }  else {
         returnHomePage(res);
     }
 });
@@ -36,20 +40,28 @@ function returnHomePage(res: http.ServerResponse) {
         <link rel="stylesheet" href="/style.css" />
       </head>
       <body>
-        <h1 class="m-8">
+        <h1 class="m-1">
             Some authors ought to be there...
         </h1>
 
-        <div class="m-16">
+        <div class="m-2">
             If in doubt, some sugestions:
-            <ul class="m-16">
+            <ul class="m-2">
                 ${authorsList}
             </ul>
         </div>
     
-        <input id="authors-search">Search for interesting authors...</input>
-    
+        <div class="w-full p-2">
+            <input class="w-full p-1" name="authors-search" placeholder="Search for interesting authors..">
+            <button class="w-full text-white bg-black p-1 mt-1 text-lg" 
+                hx-post="/search-authors" hx-target="#search-results"
+                hx-include="[name='authors-search']">Search</button>
+            <div id="search-results">
+            </div>
+        </div>
       </body>
+
+      <script src="${HTMX_SRC}"></script>
     </html>`;
 
     returnHtml(res, homePage);

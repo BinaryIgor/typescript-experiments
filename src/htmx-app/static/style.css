@@ -7,10 +7,39 @@
     -webkit-tap-highlight-color: transparent;
 }
 
-.m-8 {
+.m-1 {
     margin: 8px;
 }
 
-.m-16 {
+.mt-1 {
+    margin-top: 8px;
+}
+
+.m-2 {
     margin: 16px;
+}
+
+.p-1 {
+    padding: 8px;
+}
+
+.p-2 {
+    padding: 16px;
+}
+
+.w-full {
+    width: 100%;
+}
+
+.bg-black {
+    background-color: black;
+}
+
+.text-white {
+    color: white;
+}
+
+.text-lg {
+    font-size: 1.125rem;
+    line-height: 1.75rem;
 }
