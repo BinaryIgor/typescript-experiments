@@ -2,10 +2,15 @@ import fs from "fs";
 import path from "path";
 import bodyParser from "body-parser";
 import express, { Request, Response } from "express";
+import { Author, Authors } from "./authors";
+
 
 const HTMX_SRC = "https://unpkg.com/htmx.org@1.9.3";
 
 const SERVER_PORT = 8080;
+
+const authors = new Authors();
+authors.add(new Author("Friedrish Nietzsche"));
 
 const app = express();
 
@@ -22,7 +27,17 @@ app.get("*", async (req: Request, res: Response) => {
 
 app.post("/search-authors", (req: Request, res: Response) => {
     console.log("Searching fo authors...", req.body);
-    returnHtml(res, `<div>Some html to swap</div`);
+    const foundAuthors = authors.search();
+
+    const authorsList = foundAuthors.map(a => `<li>${a.name}</li>`).join('\n');
+
+    returnHtml(res, `
+    <div class="m-2">
+        <h2>Found authors of a query: ${req.body["authors-search"]}</h2>
+        <ul>
+        ${authorsList}
+        </ul>
+    </div>`);
 });
 
 function staticFileContent(filename: string): Promise<string> {
