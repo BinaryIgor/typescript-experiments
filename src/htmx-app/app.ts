@@ -66,7 +66,7 @@ async function returnCss(res: Response, css: string) {
 function returnHomePage(res: Response) {
     const authors = ["Friedrich Nietzsche", "Jordan Peterson", "Saifedean Ammous"];
 
-    const authorsList = authors.map(a => `<li>${a}</li>`).join("\n");
+    const authorsList = authors.map(a => `<li class="ml-4">${a}</li>`).join("\n");
 
     const homePage = `<!DOCTYPE html>
     <html lang="en">
@@ -78,13 +78,13 @@ function returnHomePage(res: Response) {
         <link rel="stylesheet" href="/style.css" />
       </head>
       <body>
-        <h1 class="m-1">
-            Some authors ought to be there XX...
+        <h1 class="m-1 text-xl">
+            Some authors ought to be there...
         </h1>
 
         <div class="m-2">
             If in doubt, some sugestions:
-            <ul class="m-2">
+            <ul class="m-2 list-disc">
                 ${authorsList}
             </ul>
         </div>
