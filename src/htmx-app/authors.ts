@@ -1,5 +1,5 @@
 export class Authors {
-    
+
     private readonly authors: Author[] = [];
 
     add(author: Author) {
@@ -12,5 +12,6 @@ export class Authors {
 }
 
 export class Author {
-    constructor(readonly name: string) {}
+    constructor(readonly name: string,
+        readonly quotes: string[]) { }
 }

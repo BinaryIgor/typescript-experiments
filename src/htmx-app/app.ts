@@ -10,7 +10,16 @@ const HTMX_SRC = "https://unpkg.com/htmx.org@1.9.3";
 const SERVER_PORT = 8080;
 
 const authors = new Authors();
-authors.add(new Author("Friedrish Nietzsche"));
+
+staticFileContent("db.json")
+    .then(db => {
+        const authorsFromDb = JSON.parse(db);
+        console.log(`Db loaded, we have ${authorsFromDb.length} authors!`);
+        for (let a of authorsFromDb) {
+            authors.add(a);
+        }
+    })
+    .catch(e => console.log("Failed to load authors db!", e));
 
 const STYLES_PATH = function() {
     const stylesPath = process.env.STYLES_PATH;
@@ -90,7 +99,7 @@ function returnHomePage(res: Response) {
         </div>
     
         <div class="w-full p-2">
-            <input class="w-full p-1" name="authors-search" placeholder="Search for interesting authors..">
+            <input class="w-full p-1" name="authors-search" placeholder="Search for interesting authors by their name or content from quotes...">
             <button class="w-full text-white bg-black p-1 mt-1 text-lg" 
                 hx-post="/search-authors" hx-target="#search-results"
                 hx-include="[name='authors-search']">Search</button>
