@@ -3,11 +3,11 @@ import path from "path";
 import bodyParser from "body-parser";
 import express, { Request, Response } from "express";
 import { Author, Authors } from "./authors";
-
-
-const HTMX_SRC = "https://unpkg.com/htmx.org@1.9.3";
+import * as Pages from "./pages";
 
 const SERVER_PORT = 8080;
+
+const SEARCH_AUTHORS_ENDPOINT = "/search-authors";
 
 const authors = new Authors();
 
@@ -21,13 +21,13 @@ staticFileContent("db.json")
     })
     .catch(e => console.log("Failed to load authors db!", e));
 
-const STYLES_PATH = function() {
+const STYLES_PATH = function () {
     const stylesPath = process.env.STYLES_PATH;
     if (stylesPath) {
         console.log(`Styles path overriden, taking them from: ${stylesPath}`);
         return stylesPath;
     } else {
-       return path.join(__dirname, "static", "style.css");
+        return path.join(__dirname, "static", "style.css");
     }
 }();
 
@@ -44,15 +44,18 @@ app.get("*", async (req: Request, res: Response) => {
     }
 })
 
-app.post("/search-authors", (req: Request, res: Response) => {
+app.post(SEARCH_AUTHORS_ENDPOINT, (req: Request, res: Response) => {
     console.log("Searching fo authors...", req.body);
-    const foundAuthors = authors.search();
+
+    const query = req.body[Pages.AUTHORS_SEARCH_INPUT];
+
+    const foundAuthors = authors.search(query);
 
     const authorsList = foundAuthors.map(a => `<li>${a.name}</li>`).join('\n');
 
     returnHtml(res, `
     <div class="m-2">
-        <h2>Found authors of a query: ${req.body["authors-search"]}</h2>
+        <h2>Found authors of a query: ${query}</h2>
         <ul>
         ${authorsList}
         </ul>
@@ -73,45 +76,7 @@ async function returnCss(res: Response, css: string) {
 }
 
 function returnHomePage(res: Response) {
-    const authors = ["Friedrich Nietzsche", "Jordan Peterson", "Saifedean Ammous"];
-
-    const authorsList = authors.map(a => `<li class="ml-4">${a}</li>`).join("\n");
-
-    const homePage = `<!DOCTYPE html>
-    <html lang="en">
-      <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
-        <title>Authors</title>
-        <link rel="stylesheet" href="/style.css" />
-      </head>
-      <body>
-        <h1 class="m-1 text-xl">
-            Some authors ought to be there...
-        </h1>
-
-        <div class="m-2">
-            If in doubt, some sugestions:
-            <ul class="m-2 list-disc">
-                ${authorsList}
-            </ul>
-        </div>
-    
-        <div class="w-full p-2">
-            <input class="w-full p-1" name="authors-search" placeholder="Search for interesting authors by their name or content from quotes...">
-            <button class="w-full text-white bg-black p-1 mt-1 text-lg" 
-                hx-post="/search-authors" hx-target="#search-results"
-                hx-include="[name='authors-search']">Search</button>
-            <div id="search-results">
-            </div>
-        </div>
-      </body>
-
-      <script src="${HTMX_SRC}"></script>
-    </html>`;
-
-    returnHtml(res, homePage);
+    returnHtml(res, Pages.homePage(authors.random(3).map(a => a.name), SEARCH_AUTHORS_ENDPOINT));
 }
 
 function returnHtml(res: Response, html: string) {
