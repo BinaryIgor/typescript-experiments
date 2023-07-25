@@ -11,7 +11,6 @@ export class Authors {
         return this.authors.filter(a => a.name.toLowerCase().includes(loweredQuery));
     }
 
-    //TODO: implement
     random(size: number): Author[] {
         if (size >= this.authors.length) {
             return this.authors;

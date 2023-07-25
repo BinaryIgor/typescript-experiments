@@ -51,15 +51,7 @@ app.post(SEARCH_AUTHORS_ENDPOINT, (req: Request, res: Response) => {
 
     const foundAuthors = authors.search(query);
 
-    const authorsList = foundAuthors.map(a => `<li>${a.name}</li>`).join('\n');
-
-    returnHtml(res, `
-    <div class="m-2">
-        <h2>Found authors of a query: ${query}</h2>
-        <ul>
-        ${authorsList}
-        </ul>
-    </div>`);
+    returnHtml(res, Pages.authorsSearchResult(foundAuthors));
 });
 
 function staticFileContent(filename: string): Promise<string> {

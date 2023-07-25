@@ -1,3 +1,5 @@
+import { Author } from "./authors";
+
 const HTMX_SRC = "https://unpkg.com/htmx.org@1.9.3";
 
 export const AUTHORS_SEARCH_INPUT = "authors-search";
@@ -37,4 +39,9 @@ export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: stri
 
       <script src="${HTMX_SRC}"></script>
     </html>`;
+}
+
+export function authorsSearchResult(result: Author[]): string {
+    const resultList = result.map(a => `<div class="m-4">${a.name}, ${a.quotes.length} quotes</div>`).join('\n');
+    return `<div class=flex">${resultList}</div>`
 }
