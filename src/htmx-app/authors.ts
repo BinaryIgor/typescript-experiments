@@ -11,6 +11,15 @@ export class Authors {
         return this.authors.filter(a => a.name.toLowerCase().includes(loweredQuery));
     }
 
+    findByName(name: string): Author | null {
+        for(let a of this.authors) {
+            if (a.name == name) {
+                return a;
+            }
+        }
+        return null;
+    }
+
     random(size: number): Author[] {
         if (size >= this.authors.length) {
             return this.authors;
