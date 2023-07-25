@@ -12,6 +12,16 @@ const SERVER_PORT = 8080;
 const authors = new Authors();
 authors.add(new Author("Friedrish Nietzsche"));
 
+const STYLES_PATH = function() {
+    const stylesPath = process.env.STYLES_PATH;
+    if (stylesPath) {
+        console.log(`Styles path overriden, taking them from: ${stylesPath}`);
+        return stylesPath;
+    } else {
+       return path.join(__dirname, "static", "style.css");
+    }
+}();
+
 const app = express();
 
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -19,7 +29,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.get("*", async (req: Request, res: Response) => {
     console.log("REq body...", req.body);
     if (req.url?.includes("style")) {
-        returnCss(res, await staticFileContent("style.css"));
+        returnCss(res, await staticFileContentOfPath(STYLES_PATH));
     } else {
         returnHomePage(res);
     }
@@ -41,7 +51,11 @@ app.post("/search-authors", (req: Request, res: Response) => {
 });
 
 function staticFileContent(filename: string): Promise<string> {
-    return fs.promises.readFile(path.join(__dirname, "static", filename), 'utf-8');
+    return staticFileContentOfPath(path.join(__dirname, "static", filename));
+}
+
+function staticFileContentOfPath(path: string): Promise<string> {
+    return fs.promises.readFile(path, 'utf-8');
 }
 
 async function returnCss(res: Response, css: string) {
@@ -65,7 +79,7 @@ function returnHomePage(res: Response) {
       </head>
       <body>
         <h1 class="m-1">
-            Some authors ought to be there...
+            Some authors ought to be there XX...
         </h1>
 
         <div class="m-2">
