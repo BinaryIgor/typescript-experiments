@@ -14,7 +14,7 @@ authors.add(new Author("Friedrish Nietzsche"));
 
 const app = express();
 
-app.use(bodyParser.urlencoded());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get("*", async (req: Request, res: Response) => {
     console.log("REq body...", req.body);
