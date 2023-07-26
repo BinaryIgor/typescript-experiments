@@ -47,7 +47,7 @@ function wrappedInMainPage(html: string): string {
         <link rel="stylesheet" href="/style.css" />
       </head>
       <body>
-        <div hx-history="false" id="${ROOT_ID}">
+        <div hx-history="true" id="${ROOT_ID}">
             ${html}
         </div>
       </body>
@@ -66,6 +66,15 @@ export function authorsSearchResult(result: Author[], authorEndpoint: Function):
 }
 
 export function authorPage(author: Author, renderFullPage: boolean): string {
-    const page = `<div>${author.name}</div>`;
+    const quotes = author.quotes.map(q => `<div class="shadow-md p-4">"${q}"</div>`).join('\n');
+
+    const page = `<div class="m-2">
+        <h1 class="text-xl">${author.name}</h1>
+        <div class="p-2">${author.note}</div>
+        <h1 class="text-lg">Quotes (${author.quotes.length})</h1>
+        <div class="space-y-4">
+            ${quotes}
+        </div>
+    </div>`;
     return renderFullPage ? wrappedInMainPage(page) : page;
 }

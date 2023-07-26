@@ -38,5 +38,6 @@ function randomNumber(max: number): number {
 
 export class Author {
     constructor(readonly name: string,
+        readonly note: string,
         readonly quotes: string[]) { }
 }
