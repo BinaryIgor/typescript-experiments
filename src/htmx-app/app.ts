@@ -7,6 +7,8 @@ import * as Pages from "./pages";
 
 const SERVER_PORT = 8080;
 
+const HTMX_REQUEST_HEADER = "hx-request";
+
 const SEARCH_AUTHORS_ENDPOINT = "/search-authors";
 const AUTHORS_ENDPOINT = "/authors";
 
@@ -52,7 +54,7 @@ app.get(`${AUTHORS_ENDPOINT}/:name`, (req: Request, res: Response) => {
 
     const author = authors.findByName(name);
     if (author) {
-        returnHtml(res, Pages.authorPage(author));
+        returnHtml(res, Pages.authorPage(author, shouldReturnFullPage(req)));
     } else {
         returnNotFound(res);
     }
@@ -87,6 +89,10 @@ function returnHomePage(res: Response) {
 function returnHtml(res: Response, html: string) {
     res.contentType("text/html");
     res.send(html);
+}
+
+function shouldReturnFullPage(req: Request): boolean {
+    return req.headers[HTMX_REQUEST_HEADER]?.includes("true") ? false : true;
 }
 
 function returnNotFound(res: Response) {

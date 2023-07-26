@@ -7,18 +7,7 @@ export const AUTHORS_SEARCH_INPUT = "authors-search";
 
 export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: string): string {
     const authorsList = suggestedAuthors.map(a => `<li class="ml-4">${a}</li>`).join("\n");
-    return `<!DOCTYPE html>
-    <html lang="en">
-      <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
-        <title>Authors</title>
-        <link rel="stylesheet" href="/style.css" />
-      </head>
-      <body>
-        <div hx-history="false" id="${ROOT_ID}">
-            <h1 class="m-1 text-xl">
+    return wrappedInMainPage(`<h1 class="m-1 text-xl">
                 Some authors ought to be there...
             </h1>
 
@@ -36,10 +25,25 @@ export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: stri
                     hx-post="${searchAuthorsEndpoint}" hx-target="#search-results">
                 <!--button class="w-full text-white bg-black p-1 mt-1 text-lg" 
                     hx-post="${searchAuthorsEndpoint}" hx-target="#search-results"
-                    hx-include="[name='${AUTHORS_SEARCH_INPUT}']">Search</button--!>
-                <div id="search-results">
-                </div>
+                    hx-include="[name='${AUTHORS_SEARCH_INPUT}']">Search</button-->
+                <div id="search-results"></div>
             </div>
+        </div>`);
+}
+
+function wrappedInMainPage(html: string): string {
+    return `<!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+        <title>Authors</title>
+        <link rel="stylesheet" href="/style.css" />
+      </head>
+      <body>
+        <div hx-history="false" id="${ROOT_ID}">
+            ${html}
         </div>
       </body>
 
@@ -56,6 +60,7 @@ export function authorsSearchResult(result: Author[], authorEndpoint: Function):
     return `<div class=flex">${resultList}</div>`
 }
 
-export function authorPage(author: Author): string {
-    return `<div>${author.name}</div>`;
+export function authorPage(author: Author, renderFullPage: boolean): string {
+    const page = `<div>${author.name}</div>`;
+    return renderFullPage ? wrappedInMainPage(page) : page;
 }
