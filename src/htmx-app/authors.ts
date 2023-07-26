@@ -20,6 +20,14 @@ export class Authors {
         return null;
     }
 
+    findQuoteOfAuthor(name: string, id: number): string | null {
+        const author = this.findByName(name);
+        if (!author || id < 0 || id >= author.quotes.length) {
+            return null;
+        } 
+        return author.quotes[id];
+    }
+
     random(size: number): Author[] {
         if (size >= this.authors.length) {
             return this.authors;

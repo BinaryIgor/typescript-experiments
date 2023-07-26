@@ -44,7 +44,7 @@ function wrappedInMainPage(html: string): string {
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
         <title>Authors</title>
-        <link rel="stylesheet" href="/style.css" />
+        <link rel="stylesheet" href="/style.css"/>
       </head>
       <body>
         <div hx-history="true" id="${ROOT_ID}">
@@ -58,15 +58,20 @@ function wrappedInMainPage(html: string): string {
 
 export function authorsSearchResult(result: Author[], authorEndpoint: Function): string {
     const resultList = result.map(a =>
-        `<div class="m-4" hx-target="#${ROOT_ID}" hx-get="${authorEndpoint(a)}" hx-push-url="true">
+        `<div class="shadow-md p-4 cursor-pointer" hx-target="#${ROOT_ID}" hx-get="${authorEndpoint(a)}" hx-push-url="true">
             ${a.name}, ${a.quotes.length} quotes
         </div>`)
         .join('\n');
-    return `<div class=flex">${resultList}</div>`
+    return `<div class="space-y-4">${resultList}</div>`
 }
 
-export function authorPage(author: Author, renderFullPage: boolean): string {
-    const quotes = author.quotes.map(q => `<div class="shadow-md p-4">"${q}"</div>`).join('\n');
+export function authorPage(author: Author,  authorQuoteEndpoint: Function, renderFullPage: boolean): string {
+    const quotes = author.quotes.map((q, idx) => `
+        <div class="shadow-md p-4 cursor-pointer"
+            hx-push-url="true" hx-target="#${ROOT_ID}" hx-get="${authorQuoteEndpoint(author, idx)}">
+            "${q}"
+        </div>`)
+        .join('\n');
 
     const page = `<div class="m-2">
         <h1 class="text-xl">${author.name}</h1>
@@ -76,5 +81,17 @@ export function authorPage(author: Author, renderFullPage: boolean): string {
             ${quotes}
         </div>
     </div>`;
+
     return renderFullPage ? wrappedInMainPage(page) : page;
+}
+
+export function authorQuotePage(author: string, quote: string, notes: string[], renedFullPage: boolean): string {
+    const page = `<div class="shadow-md p-6">
+        <p class="text-xl">"${quote}"</p>
+        <p class="text-lg font-bold text-right">${author}</p>
+    </div>
+    <div>Notes (${notes.length})</div>
+    `;
+    
+    return renedFullPage ? wrappedInMainPage(page) : page;
 }

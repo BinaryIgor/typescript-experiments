@@ -11,6 +11,7 @@ const HTMX_REQUEST_HEADER = "hx-request";
 
 const SEARCH_AUTHORS_ENDPOINT = "/search-authors";
 const AUTHORS_ENDPOINT = "/authors";
+const QUOTES_ENDPOINT_PART = "quotes";
 
 const authors = new Authors();
 
@@ -54,7 +55,23 @@ app.get(`${AUTHORS_ENDPOINT}/:name`, (req: Request, res: Response) => {
 
     const author = authors.findByName(name);
     if (author) {
-        returnHtml(res, Pages.authorPage(author, shouldReturnFullPage(req)));
+        returnHtml(res, Pages.authorPage(author,
+             (a: Author, qIdx: number) => `${AUTHORS_ENDPOINT}/${a.name}/${QUOTES_ENDPOINT_PART}/${qIdx}`,
+             shouldReturnFullPage(req)));
+    } else {
+        returnNotFound(res);
+    }
+});
+
+app.get(`${AUTHORS_ENDPOINT}/:name/${QUOTES_ENDPOINT_PART}/:id`, (req: Request, res: Response) => {
+    const name = req.params.name;
+    //TODO refactor!
+    const quoteId = req.params.id as any as number;
+    console.log(`Getting ${quoteId} quote of ${name} author`);
+
+    const quote = authors.findQuoteOfAuthor(name, quoteId);
+    if (quote) {
+        returnHtml(res, Pages.authorQuotePage(name, quote, [], shouldReturnFullPage(req)));
     } else {
         returnNotFound(res);
     }
