@@ -21,11 +21,16 @@ export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: stri
             <div class="w-full p-2">
                 <input class="w-full p-1" name="${AUTHORS_SEARCH_INPUT}" 
                     placeholder="Search for interesting authors by their name or content from quotes..."
-                    hx-trigger="keyup changed delay:1000ms" 
-                    hx-post="${searchAuthorsEndpoint}" hx-target="#search-results">
+                    hx-trigger="keyup changed delay:500ms" 
+                    hx-post="${searchAuthorsEndpoint}" 
+                    hx-target="#search-results"
+                    hx-indicator="#search-results-indicator">
                 <!--button class="w-full text-white bg-black p-1 mt-1 text-lg" 
                     hx-post="${searchAuthorsEndpoint}" hx-target="#search-results"
                     hx-include="[name='${AUTHORS_SEARCH_INPUT}']">Search</button-->
+                <div id="search-results-indicator" class="load-indicator">
+                    Loading results...
+                </div>
                 <div id="search-results"></div>
             </div>
         </div>`);
