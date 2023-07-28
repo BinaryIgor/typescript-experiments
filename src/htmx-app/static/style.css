@@ -2,67 +2,91 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Semantics for combining classes!
-/* @layer components {
-    .some-button {
-        @apply py-2 px-4 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75;
-    }
-} */
+/* Semantics for combining classes! */
+@layer components {
+  .some-button {
+    @apply py-2 px-4 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover: bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75;
+  }
+
+  .error-message {
+    @apply text-red-500 text-sm transition-transform origin-left duration-150 ease-in-out;
+  }
+
+  /* .error-border {
+    @apply border-red-500 focus: border-red-500;
+  } */
+
+  .error-message.inactive {
+    @apply h-0 scale-0 m-0 p-0;
+  }
+
+  .error-message.active {
+    @apply scale-100;
+  }
+}
 
 .load-indicator {
-    height: 0;
-    visibility: hidden;
-    opacity: 0;
-    transition: visibility 0ms, opacity 500ms ease-in;
+  height: 0;
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 0ms, opacity 500ms ease-in;
 }
 
 .htmx-request .load-indicator {
-    height: auto;
-    visibility: visible;
-    opacity: 1
+  height: auto;
+  visibility: visible;
+  opacity: 1
 }
 
 .htmx-request.load-indicator {
-    height: auto;
-    visibility: visible;
-    opacity: 1
+  height: auto;
+  visibility: visible;
+  opacity: 1
 }
 
 /*Refactor*!/
 /* The Modal (background) */
 .modal {
-    position: fixed; /* Stay in place */
-    z-index: 1; /* Sit on top */
-    padding-top: 100px; /* Location of the box */
-    left: 0;
-    top: 0;
-    width: 100%; /* Full width */
-    height: 100%; /* Full height */
-    overflow: auto; /* Enable scroll if needed */
-    background-color: rgb(0,0,0); /* Fallback color */
-    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
-  }
-  
-  /* Modal Content */
-  .modal-content {
-    background-color: #fefefe;
-    margin: auto;
-    padding: 20px;
-    border: 1px solid #888;
-    width: 80%;
-  }
-  
-  /* The Close Button */
-  .close {
-    color: #aaaaaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-  }
-  
-  .close:hover,
-  .close:focus {
-    color: #000;
-    text-decoration: none;
-    cursor: pointer;
-  }
+  position: fixed;
+  /* Stay in place */
+  z-index: 1;
+  /* Sit on top */
+  padding-top: 100px;
+  /* Location of the box */
+  left: 0;
+  top: 0;
+  width: 100%;
+  /* Full width */
+  height: 100%;
+  /* Full height */
+  overflow: auto;
+  /* Enable scroll if needed */
+  background-color: rgb(0, 0, 0);
+  /* Fallback color */
+  background-color: rgba(0, 0, 0, 0.4);
+  /* Black w/ opacity */
+}
+
+/* Modal Content */
+.modal-content {
+  background-color: #fefefe;
+  margin: auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%;
+}
+
+/* The Close Button */
+.close {
+  color: #aaaaaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+  color: #000;
+  text-decoration: none;
+  cursor: pointer;
+}

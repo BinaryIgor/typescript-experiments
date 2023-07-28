@@ -22,3 +22,10 @@ function initErrorModal() {
         errorModal.classList.toggle("hidden");
     });
 }
+
+function setFormChangeListener(submitSelector="input[type='submit']") {
+    const target = this.event.currentTarget;
+    console.log("Input has changed...", target);
+    console.log("Errors: ", target.getElementsByClassName("error-message active"));
+    console.log("Submit: ", target.querySelector("input[type='submit']"));
+}

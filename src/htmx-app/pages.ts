@@ -1,12 +1,18 @@
 import { Author } from "./authors";
+import { AppError, ErrorCode } from "./errors";
 import { Quote } from "./quotes";
 
 const HTMX_SRC = "https://unpkg.com/htmx.org@1.9.3";
 const ROOT_ID = "app";
 
+
+const ERRORS_TRANSLATIONS = {
+    INVALID_QUOTE_NOTE_CONTENT: "Note can't be empty and needs to have 3 - 1000 characters",
+    INVALID_QUOTE_NOTE_AUTHOR: "Note author can't be empty and needs to have 3 - 50 characters"
+} as any;
+
 export const AUTHORS_SEARCH_INPUT = "authors-search";
 const INDEX_JS_SRC = "/index.js";
-const QUOTE_PAGE_JS_SRC = "/quote-page.js";
 
 export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: string): string {
     const authorsList = suggestedAuthors.map(a => `<li class="ml-4">${a}</li>`).join("\n");
@@ -92,11 +98,13 @@ export function authorPage(author: Author, authorQuotes: Quote[], quoteEndpoint:
 }
 
 export function authorQuotePage(params: {
-    author: string, 
+    author: string,
     quoteId: number,
-    quote: string, 
+    quote: string,
     notes: string[],
     addQuoteNoteEndpoint: Function,
+    validateQuoteNoteEndpoint: string,
+    validateQuoteAuthorEndpoint: string,
     renderFullPage: boolean
 }): string {
     const page = `<div class="shadow-md p-6">
@@ -109,11 +117,10 @@ export function authorQuotePage(params: {
             <button id="add-note-btn" onclick="toggleAddNoteForm()">Add</button>
         </div>
         <form id="add-note-form" class="hidden p-4 shadow-md relative"
+            oninput="setChangeListener()"
             hx-post="${params.addQuoteNoteEndpoint(params.quoteId)}">
-            <input name="note" placeholder="Your note..">
-            <div></div>
-            <input name="author" placeholder="Your name">
-            <div></div>
+            ${inputWithHiddenError('note', 'Your note...', params.validateQuoteNoteEndpoint)}
+            ${inputWithHiddenError('author', 'Your name...', params.validateQuoteAuthorEndpoint)}
             <input class="absolute bottom-0 right-0 p-4" type="submit" value="Add">
         </form>
     </div>
@@ -125,6 +132,28 @@ export function authorQuotePage(params: {
     `;
 
     return params.renderFullPage ? wrappedInMainPage(page) : page;
+}
+
+export function inputWithHiddenError(name: string, placeholder: string, validateEndpoint: string): string {
+    return `<input name="${name}" placeholder="${placeholder}"
+        hx-trigger="keyup changed delay:500ms"
+        hx-target="next .error-message"
+        hx-swap="outerHTML"
+        hx-post="${validateEndpoint}">
+    ${inputErrorIf()}`
+}
+
+export function errorPage(error: AppError): string {
+    return error.errors.map(e => `<p>${translatedError(e)}</p>`).join('\n');
+}
+
+function translatedError(error: ErrorCode): string {
+    return ERRORS_TRANSLATIONS[error] ?? error;
+}
+
+export function inputErrorIf(error: ErrorCode | null = null): string {
+    const translated = error ? translatedError(error) : "";
+    return `<p class="error-message ${translated ? 'active' : 'inactive'}">${translated}</p>`
 }
 
 function pageJsSrc(src: string): string {

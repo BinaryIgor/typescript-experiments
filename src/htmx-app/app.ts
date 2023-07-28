@@ -6,6 +6,8 @@ import { Author, Authors } from "./authors";
 import { Quotes } from "./quotes";
 import { importDb } from "./db-import";
 import * as Pages from "./pages";
+import { QuoteNotes, QuoteNote } from "./quote-notes";
+import { AppError } from "./errors";
 
 const SERVER_PORT = 8080;
 
@@ -15,10 +17,15 @@ const HTMX_RESTORE_HISTORY_REQUEST = "hx-history-restore-request";
 const SEARCH_AUTHORS_ENDPOINT = "/search-authors";
 const AUTHORS_ENDPOINT = "/authors";
 const QUOTES_ENDPOINT = "/quotes";
-const QUOTE_NOTES_ENDPOINT_PART = "/notes";
+const QUOTE_NOTES_ENDPOINT_PART = "notes";
+const QUOTE_NOTES_VALIDATE_NOTE_ENDPOINT = `${QUOTES_ENDPOINT}/validate-note`;
+const QUOTE_NOTES_VALIDATE_AUTHOR_ENDPOINT = `${QUOTES_ENDPOINT}/validate-author`;
 
 const authors = new Authors();
 const quotes = new Quotes();
+
+const quoteNotes = new QuoteNotes();
+
 staticFileContent("db.json")
     .then(db => importDb(db, authors, quotes))
     .catch(e => console.log("Failed to load authors db!", e));
@@ -79,11 +86,45 @@ app.get(`${QUOTES_ENDPOINT}/:id`, (req: Request, res: Response) => {
             quote: quote.content,
             notes: [],
             addQuoteNoteEndpoint: (qId: number) => `${QUOTES_ENDPOINT}/${qId}/${QUOTE_NOTES_ENDPOINT_PART}`,
+            validateQuoteNoteEndpoint: QUOTE_NOTES_VALIDATE_NOTE_ENDPOINT,
+            validateQuoteAuthorEndpoint: QUOTE_NOTES_VALIDATE_AUTHOR_ENDPOINT,
             renderFullPage: shouldReturnFullPage(req)
         }));
     } else {
         returnNotFound(res);
     }
+});
+
+app.post(`${QUOTES_ENDPOINT}/:id/${QUOTE_NOTES_ENDPOINT_PART}`, (req: Request, res: Response) => {
+    const quoteId = req.params.id as any as number;
+    console.log("Req body...", req.body);
+
+    const note = new QuoteNote(quoteId, req.body.note, req.body.author, Date.now());
+
+    //TODO: global error handler
+    try {
+        quoteNotes.addNote(note);
+    } catch(e) {
+        if (e  instanceof AppError) {
+            returnError(res, e);
+        } else {
+            throw e;
+        }
+    }
+
+    returnNotFound(res);
+});
+
+app.post(QUOTE_NOTES_VALIDATE_NOTE_ENDPOINT, (req: Request, res: Response) => {
+    console.log("REq body...", req.body);
+    const noteError = quoteNotes.validateQuoteNote(req.body.note);
+    returnHtml(res, Pages.inputErrorIf(noteError));
+});
+
+app.post(QUOTE_NOTES_VALIDATE_AUTHOR_ENDPOINT, (req: Request, res: Response) => {
+    console.log("REq body...", req.body);
+    const authorError = quoteNotes.validateQuoteAuthor(req.body.author);
+    returnHtml(res, Pages.inputErrorIf(authorError));
 });
 
 app.get("*", async (req: Request, res: Response) => {
@@ -125,6 +166,15 @@ function returnHtml(res: Response, html: string) {
     res.send(html);
 }
 
+function returnTextOrEmpty(res: Response, text: string | null) {
+    if (text) {
+        res.contentType("text/plain");
+        res.send(text);
+    } else {
+        res.sendStatus(200);
+    }
+}
+
 function shouldReturnFullPage(req: Request): boolean {
     return (req.headers[HTMX_REQUEST_HEADER] ? false : true) &&
         (req.headers[HTMX_RESTORE_HISTORY_REQUEST] ? false: true)
@@ -132,6 +182,12 @@ function shouldReturnFullPage(req: Request): boolean {
 
 function returnNotFound(res: Response) {
     res.sendStatus(404);
+}
+
+function returnError(res: Response, error: AppError) {
+    res.status(400)
+    res.contentType("text/html");
+    res.send(Pages.errorPage(error));
 }
 
 app.listen(SERVER_PORT, () => {
