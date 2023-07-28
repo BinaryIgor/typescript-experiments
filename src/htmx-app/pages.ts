@@ -92,9 +92,16 @@ export function authorQuotePage(author: string, quote: string, notes: string[], 
     </div>
     <div class="p-4">
         <div class="flex justify-between">
-        <p>Notes (${notes.length})</p>
-        <button>Add</button>
+            <p>Notes (${notes.length})</p>
+            <button id="add-note-btn">Add</button>
         </div>
+        <form id="add-note-form" class="hidden p-4 shadow-md relative">
+            <input name="note" placeholder="Your note..">
+            <div/>
+            <input name="author" placeholder="Your name">
+            <div/>
+            <input class="absolute bottom-0 right-0 p-4" type="submit" value="Add">
+        </form>
     </div>
     ${pageJsSrc(QUOTE_PAGE_JS_SRC)}
     `;
