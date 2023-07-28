@@ -88,10 +88,15 @@ export function authorPage(author: Author,  authorQuotes: Quote[], quoteEndpoint
 
 export function authorQuotePage(author: string, quote: string, notes: string[], renedFullPage: boolean): string {
     const page = `<div class="shadow-md p-6">
-        <p class="text-xl">"${quote}"</p>
-        <p class="text-lg font-bold text-right">${author}</p>
+        <p class="text-2xl">"${quote}"</p>
+        <p class="text-xl font-bold text-right">${author}</p>
     </div>
-    <div>Your Notes (${notes.length})</div>
+    <div class="p-4">
+        <div class="flex justify-between">
+        <p>Notes (${notes.length})</p>
+        <button>Add</button>
+        </div>
+    </div>
     `;
     
     return renedFullPage ? wrappedInMainPage(page) : page;
