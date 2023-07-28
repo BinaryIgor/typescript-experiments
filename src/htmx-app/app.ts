@@ -14,6 +14,7 @@ const HTMX_REQUEST_HEADER = "hx-request";
 const SEARCH_AUTHORS_ENDPOINT = "/search-authors";
 const AUTHORS_ENDPOINT = "/authors";
 const QUOTES_ENDPOINT = "/quotes";
+const QUOTE_NOTES_ENDPOINT_PART = "/notes";
 
 const authors = new Authors();
 const quotes = new Quotes();
@@ -67,12 +68,18 @@ app.get(`${AUTHORS_ENDPOINT}/:name`, (req: Request, res: Response) => {
 });
 
 app.get(`${QUOTES_ENDPOINT}/:id`, (req: Request, res: Response) => {
-    const name = req.params.name;
     const quoteId = req.params.id as any as number;
 
     const quote = quotes.ofId(quoteId);
     if (quote) {
-        returnHtml(res, Pages.authorQuotePage(quote.author, quote.content, [], shouldReturnFullPage(req)));
+        returnHtml(res, Pages.authorQuotePage({
+            author: quote.author,
+            quoteId: quote.id,
+            quote: quote.content,
+            notes: [],
+            addQuoteNoteEndpoint: (qId: number) => `${QUOTES_ENDPOINT}/${qId}/${QUOTE_NOTES_ENDPOINT_PART}`,
+            renderFullPage: shouldReturnFullPage(req)
+        }));
     } else {
         returnNotFound(res);
     }

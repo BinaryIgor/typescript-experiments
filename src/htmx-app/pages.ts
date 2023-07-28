@@ -5,7 +5,8 @@ const HTMX_SRC = "https://unpkg.com/htmx.org@1.9.3";
 const ROOT_ID = "app";
 
 export const AUTHORS_SEARCH_INPUT = "authors-search";
-const QUOTE_PAGE_JS_SRC ="/quote-page.js";
+const INDEX_JS_SRC = "/index.js";
+const QUOTE_PAGE_JS_SRC = "/quote-page.js";
 
 export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: string): string {
     const authorsList = suggestedAuthors.map(a => `<li class="ml-4">${a}</li>`).join("\n");
@@ -35,7 +36,9 @@ export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: stri
                 </div>
                 <div id="search-results"></div>
             </div>
-        </div>`);
+        </div>
+        ${errorModal()}
+        `);
 }
 
 function wrappedInMainPage(html: string): string {
@@ -53,6 +56,7 @@ function wrappedInMainPage(html: string): string {
       </body>
 
       <script src="${HTMX_SRC}"></script>
+      <script src="${INDEX_JS_SRC}"></script>
     </html>`;
 }
 
@@ -65,7 +69,7 @@ export function authorsSearchResult(result: Author[], authorEndpoint: Function):
     return `<div class="space-y-4">${resultList}</div>`
 }
 
-export function authorPage(author: Author,  authorQuotes: Quote[], quoteEndpoint: Function, renderFullPage: boolean): string {
+export function authorPage(author: Author, authorQuotes: Quote[], quoteEndpoint: Function, renderFullPage: boolean): string {
     const quotes = authorQuotes.map(q => `
         <div class="shadow-md p-4 cursor-pointer"
             hx-push-url="true" hx-target="#${ROOT_ID}" hx-get="${quoteEndpoint(q.id)}">
@@ -80,35 +84,55 @@ export function authorPage(author: Author,  authorQuotes: Quote[], quoteEndpoint
         <div class="space-y-4">
             ${quotes}
         </div>
-    </div>`;
+    </div>
+    ${errorModal()}
+    `;
 
     return renderFullPage ? wrappedInMainPage(page) : page;
 }
 
-export function authorQuotePage(author: string, quote: string, notes: string[], renedFullPage: boolean): string {
+export function authorQuotePage(params: {
+    author: string, 
+    quoteId: number,
+    quote: string, 
+    notes: string[],
+    addQuoteNoteEndpoint: Function,
+    renderFullPage: boolean
+}): string {
     const page = `<div class="shadow-md p-6">
-        <p class="text-2xl">"${quote}"</p>
-        <p class="text-xl font-bold text-right">${author}</p>
+        <p class="text-2xl">"${params.quote}"</p>
+        <p class="text-xl font-bold text-right">${params.author}</p>
     </div>
     <div class="p-4">
         <div class="flex justify-between">
-            <p>Notes (${notes.length})</p>
+            <p>Notes (${params.notes.length})</p>
             <button id="add-note-btn">Add</button>
         </div>
-        <form id="add-note-form" class="hidden p-4 shadow-md relative">
+        <form id="add-note-form" class="hidden p-4 shadow-md relative"
+            hx-post="${params.addQuoteNoteEndpoint(params.quoteId)}">
             <input name="note" placeholder="Your note..">
-            <div/>
+            <div></div>
             <input name="author" placeholder="Your name">
-            <div/>
+            <div></div>
             <input class="absolute bottom-0 right-0 p-4" type="submit" value="Add">
         </form>
     </div>
+    ${errorModal()}
     ${pageJsSrc(QUOTE_PAGE_JS_SRC)}
     `;
-    
-    return renedFullPage ? wrappedInMainPage(page) : page;
+
+    return params.renderFullPage ? wrappedInMainPage(page) : page;
 }
 
 function pageJsSrc(src: string): string {
-    return `<script src=${src}></script`;
+    return `<script src=${src}></script>`;
+}
+
+function errorModal(): string {
+    return `<div class="modal hidden" id="error-modal">
+        <div class="modal-content">
+            <span id="error-modal-close" class="close">&times;</span>
+            <div id="error-modal-content"></div>
+        </div>
+    </div>`;
 }
