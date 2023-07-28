@@ -10,6 +10,7 @@ import * as Pages from "./pages";
 const SERVER_PORT = 8080;
 
 const HTMX_REQUEST_HEADER = "hx-request";
+const HTMX_RESTORE_HISTORY_REQUEST = "hx-history-restore-request";
 
 const SEARCH_AUTHORS_ENDPOINT = "/search-authors";
 const AUTHORS_ENDPOINT = "/authors";
@@ -125,7 +126,8 @@ function returnHtml(res: Response, html: string) {
 }
 
 function shouldReturnFullPage(req: Request): boolean {
-    return req.headers[HTMX_REQUEST_HEADER]?.includes("true") ? false : true;
+    return (req.headers[HTMX_REQUEST_HEADER] ? false : true) &&
+        (req.headers[HTMX_RESTORE_HISTORY_REQUEST] ? false: true)
 }
 
 function returnNotFound(res: Response) {

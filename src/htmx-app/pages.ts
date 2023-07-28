@@ -36,9 +36,7 @@ export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: stri
                 </div>
                 <div id="search-results"></div>
             </div>
-        </div>
-        ${errorModal()}
-        `);
+        </div>`);
 }
 
 function wrappedInMainPage(html: string): string {
@@ -51,8 +49,11 @@ function wrappedInMainPage(html: string): string {
         <title>Authors</title>
         <link rel="stylesheet" href="/style.css"/>
       </head>
-      <body hx-history="true" id="${ROOT_ID}">
-        ${html}
+      <body>
+        ${errorModal()}
+        <div hx-history="true" id="${ROOT_ID}" hx-history-elt>
+            ${html}
+        </div>
       </body>
 
       <script src="${HTMX_SRC}"></script>
@@ -85,7 +86,6 @@ export function authorPage(author: Author, authorQuotes: Quote[], quoteEndpoint:
             ${quotes}
         </div>
     </div>
-    ${errorModal()}
     `;
 
     return renderFullPage ? wrappedInMainPage(page) : page;
@@ -106,7 +106,7 @@ export function authorQuotePage(params: {
     <div class="p-4">
         <div class="flex justify-between">
             <p>Notes (${params.notes.length})</p>
-            <button id="add-note-btn">Add</button>
+            <button id="add-note-btn" onclick="toggleAddNoteForm()">Add</button>
         </div>
         <form id="add-note-form" class="hidden p-4 shadow-md relative"
             hx-post="${params.addQuoteNoteEndpoint(params.quoteId)}">
@@ -117,8 +117,11 @@ export function authorQuotePage(params: {
             <input class="absolute bottom-0 right-0 p-4" type="submit" value="Add">
         </form>
     </div>
-    ${errorModal()}
-    ${pageJsSrc(QUOTE_PAGE_JS_SRC)}
+    ${inlineJs(`
+        function toggleAddNoteForm() {
+            document.getElementById("add-note-form").classList.toggle("hidden");
+        };
+    `)}
     `;
 
     return params.renderFullPage ? wrappedInMainPage(page) : page;
@@ -126,6 +129,10 @@ export function authorQuotePage(params: {
 
 function pageJsSrc(src: string): string {
     return `<script src=${src}></script>`;
+}
+
+function inlineJs(js: string): string {
+    return `<script>${js}</script>`
 }
 
 function errorModal(): string {
