@@ -1,4 +1,5 @@
 import { Author } from "./authors";
+import { Quote } from "./quotes";
 
 const HTMX_SRC = "https://unpkg.com/htmx.org@1.9.3";
 const ROOT_ID = "app";
@@ -59,24 +60,24 @@ function wrappedInMainPage(html: string): string {
 export function authorsSearchResult(result: Author[], authorEndpoint: Function): string {
     const resultList = result.map(a =>
         `<div class="shadow-md p-4 cursor-pointer" hx-target="#${ROOT_ID}" hx-get="${authorEndpoint(a)}" hx-push-url="true">
-            ${a.name}, ${a.quotes.length} quotes
+            ${a.name}
         </div>`)
         .join('\n');
     return `<div class="space-y-4">${resultList}</div>`
 }
 
-export function authorPage(author: Author,  authorQuoteEndpoint: Function, renderFullPage: boolean): string {
-    const quotes = author.quotes.map((q, idx) => `
+export function authorPage(author: Author,  authorQuotes: Quote[], quoteEndpoint: Function, renderFullPage: boolean): string {
+    const quotes = authorQuotes.map(q => `
         <div class="shadow-md p-4 cursor-pointer"
-            hx-push-url="true" hx-target="#${ROOT_ID}" hx-get="${authorQuoteEndpoint(author, idx)}">
-            "${q}"
+            hx-push-url="true" hx-target="#${ROOT_ID}" hx-get="${quoteEndpoint(q.id)}">
+            "${q.content}"
         </div>`)
         .join('\n');
 
     const page = `<div class="m-2">
         <h1 class="text-xl">${author.name}</h1>
         <div class="p-2">${author.note}</div>
-        <h1 class="text-lg">Quotes (${author.quotes.length})</h1>
+        <h1 class="text-lg">Quotes (${authorQuotes.length})</h1>
         <div class="space-y-4">
             ${quotes}
         </div>
@@ -90,7 +91,7 @@ export function authorQuotePage(author: string, quote: string, notes: string[], 
         <p class="text-xl">"${quote}"</p>
         <p class="text-lg font-bold text-right">${author}</p>
     </div>
-    <div>Notes (${notes.length})</div>
+    <div>Your Notes (${notes.length})</div>
     `;
     
     return renedFullPage ? wrappedInMainPage(page) : page;

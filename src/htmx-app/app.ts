@@ -2,7 +2,9 @@ import fs from "fs";
 import path from "path";
 import bodyParser from "body-parser";
 import express, { Request, Response } from "express";
-import {Author, Authors } from "./authors";
+import { Author, Authors } from "./authors";
+import { Quotes } from "./quotes";
+import { importDb } from "./db-import";
 import * as Pages from "./pages";
 
 const SERVER_PORT = 8080;
@@ -11,18 +13,13 @@ const HTMX_REQUEST_HEADER = "hx-request";
 
 const SEARCH_AUTHORS_ENDPOINT = "/search-authors";
 const AUTHORS_ENDPOINT = "/authors";
-const QUOTES_ENDPOINT_PART = "quotes";
+const QUOTES_ENDPOINT = "/quotes";
 
 const authors = new Authors();
+const quotes = new Quotes();
 
 staticFileContent("db.json")
-    .then(db => {
-        const authorsFromDb = JSON.parse(db);
-        console.log(`Db loaded, we have ${authorsFromDb.length} authors!`);
-        for (let a of authorsFromDb) {
-            authors.add(a);
-        }
-    })
+    .then(db => importDb(db, authors, quotes))
     .catch(e => console.log("Failed to load authors db!", e));
 
 const STYLES_PATH = function () {
@@ -45,33 +42,36 @@ app.post(SEARCH_AUTHORS_ENDPOINT, (req: Request, res: Response) => {
     const query = req.body[Pages.AUTHORS_SEARCH_INPUT];
 
     const foundAuthors = authors.search(query);
+    //TODO: search quotes!
 
-    returnHtml(res, Pages.authorsSearchResult(foundAuthors, (a: Author) => `${AUTHORS_ENDPOINT}/${a.name}`));
+    //Slow it down, for demonstration purposes
+    setTimeout(() => returnHtml(res,
+        Pages.authorsSearchResult(foundAuthors, (a: Author) => `${AUTHORS_ENDPOINT}/${a.name}`)),
+        1000);
 });
 
 app.get(`${AUTHORS_ENDPOINT}/:name`, (req: Request, res: Response) => {
     const name = req.params.name;
     console.log("Getting author:", name);
 
-    const author = authors.findByName(name);
+    const author = authors.ofName(name);
+    const authorQuotes = quotes.ofAuthor(name);
     if (author) {
-        returnHtml(res, Pages.authorPage(author,
-             (a: Author, qIdx: number) => `${AUTHORS_ENDPOINT}/${a.name}/${QUOTES_ENDPOINT_PART}/${qIdx}`,
-             shouldReturnFullPage(req)));
+        returnHtml(res, Pages.authorPage(author, authorQuotes,
+            (qId: number) => `${QUOTES_ENDPOINT}/${qId}`,
+            shouldReturnFullPage(req)));
     } else {
         returnNotFound(res);
     }
 });
 
-app.get(`${AUTHORS_ENDPOINT}/:name/${QUOTES_ENDPOINT_PART}/:id`, (req: Request, res: Response) => {
+app.get(`${QUOTES_ENDPOINT}/:id`, (req: Request, res: Response) => {
     const name = req.params.name;
-    //TODO refactor!
     const quoteId = req.params.id as any as number;
-    console.log(`Getting ${quoteId} quote of ${name} author`);
 
-    const quote = authors.findQuoteOfAuthor(name, quoteId);
+    const quote = quotes.ofId(quoteId);
     if (quote) {
-        returnHtml(res, Pages.authorQuotePage(name, quote, [], shouldReturnFullPage(req)));
+        returnHtml(res, Pages.authorQuotePage(quote.author, quote.content, [], shouldReturnFullPage(req)));
     } else {
         returnNotFound(res);
     }

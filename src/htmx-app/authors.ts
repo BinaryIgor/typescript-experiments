@@ -11,21 +11,13 @@ export class Authors {
         return this.authors.filter(a => a.name.toLowerCase().includes(loweredQuery));
     }
 
-    findByName(name: string): Author | null {
-        for(let a of this.authors) {
+    ofName(name: string): Author | null {
+        for (let a of this.authors) {
             if (a.name == name) {
                 return a;
             }
         }
         return null;
-    }
-
-    findQuoteOfAuthor(name: string, id: number): string | null {
-        const author = this.findByName(name);
-        if (!author || id < 0 || id >= author.quotes.length) {
-            return null;
-        } 
-        return author.quotes[id];
     }
 
     random(size: number): Author[] {
@@ -45,7 +37,5 @@ function randomNumber(max: number): number {
 }
 
 export class Author {
-    constructor(readonly name: string,
-        readonly note: string,
-        readonly quotes: string[]) { }
+    constructor(readonly name: string, readonly note: string) { }
 }
