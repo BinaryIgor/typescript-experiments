@@ -5,6 +5,7 @@ const HTMX_SRC = "https://unpkg.com/htmx.org@1.9.3";
 const ROOT_ID = "app";
 
 export const AUTHORS_SEARCH_INPUT = "authors-search";
+const QUOTE_PAGE_JS_SRC ="/quote-page.js";
 
 export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: string): string {
     const authorsList = suggestedAuthors.map(a => `<li class="ml-4">${a}</li>`).join("\n");
@@ -47,10 +48,8 @@ function wrappedInMainPage(html: string): string {
         <title>Authors</title>
         <link rel="stylesheet" href="/style.css"/>
       </head>
-      <body>
-        <div hx-history="true" id="${ROOT_ID}">
-            ${html}
-        </div>
+      <body hx-history="true" id="${ROOT_ID}">
+        ${html}
       </body>
 
       <script src="${HTMX_SRC}"></script>
@@ -97,7 +96,12 @@ export function authorQuotePage(author: string, quote: string, notes: string[], 
         <button>Add</button>
         </div>
     </div>
+    ${pageJsSrc(QUOTE_PAGE_JS_SRC)}
     `;
     
     return renedFullPage ? wrappedInMainPage(page) : page;
+}
+
+function pageJsSrc(src: string): string {
+    return `<script src=${src}></script`;
 }

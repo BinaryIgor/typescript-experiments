@@ -17,18 +17,19 @@ const QUOTES_ENDPOINT = "/quotes";
 
 const authors = new Authors();
 const quotes = new Quotes();
-
 staticFileContent("db.json")
     .then(db => importDb(db, authors, quotes))
     .catch(e => console.log("Failed to load authors db!", e));
 
+const STATIC_ASSETS_PATH = path.join(__dirname, "static");
+
 const STYLES_PATH = function () {
     const stylesPath = process.env.STYLES_PATH;
     if (stylesPath) {
-        console.log(`Styles path overriden, taking them from: ${stylesPath}`);
+        console.log(`Styles path overriden, taking them from: ${staticFileContent}`);
         return stylesPath;
     } else {
-        return path.join(__dirname, "static", "style.css");
+        return path.join(STATIC_ASSETS_PATH, "style.css");
     }
 }();
 
@@ -79,8 +80,11 @@ app.get(`${QUOTES_ENDPOINT}/:id`, (req: Request, res: Response) => {
 
 app.get("*", async (req: Request, res: Response) => {
     console.log("REq body...", req.body);
-    if (req.url?.includes("style")) {
+    if (req.url.includes("style")) {
         returnCss(res, await staticFileContentOfPath(STYLES_PATH));
+    } else if (req.url.includes(".js")) {
+        const fileName = req.url.substring(req.url.lastIndexOf("/"));
+        returnJs(res, await staticFileContentOfPath(path.join(STATIC_ASSETS_PATH, fileName)));
     } else {
         returnHomePage(res);
     }
@@ -97,6 +101,11 @@ function staticFileContentOfPath(path: string): Promise<string> {
 async function returnCss(res: Response, css: string) {
     res.contentType("text/css");
     res.send(css);
+}
+
+async function returnJs(res: Response, js: string) {
+    res.contentType("application/javascript");
+    res.send(js);
 }
 
 function returnHomePage(res: Response) {
