@@ -1,6 +1,7 @@
 console.log("Loading index js...");
 
 initErrorModal();
+initBackendTriggersListeners();
 
 function initErrorModal() {
     const errorModal = document.getElementById("error-modal");
@@ -23,9 +24,29 @@ function initErrorModal() {
     });
 }
 
-function setFormChangeListener(submitSelector="input[type='submit']") {
-    const target = this.event.currentTarget;
-    console.log("Input has changed...", target);
-    console.log("Errors: ", target.getElementsByClassName("error-message active"));
-    console.log("Submit: ", target.querySelector("input[type='submit']"));
+function initBackendTriggersListeners() {
+    document.addEventListener("input-validated", e => {
+        console.log("Input validated...", e);
+    });
 }
+
+// function setFormChangeListener(submitSelector = "input[type='submit']", disabledClass = "disabled") {
+//     const target = this.event.currentTarget;
+//     console.log("Input has changed...", target);
+
+//     const errors = target.getElementsByClassName("error-message active")
+
+//     console.log("Errors: ", errors);
+
+//     const submitButton = target.querySelector(submitSelector);
+
+//     console.log("Submit: ", submitButton);
+
+//     if (errors && errors.length > 0) {
+//         submitButton.disabled = true;
+//         submitButton.classList.add(disabledClass);
+//     } else {
+//         submitButton.disabled = false;
+//         submitButton.classList.remove(disabledClass);
+//     }
+// }

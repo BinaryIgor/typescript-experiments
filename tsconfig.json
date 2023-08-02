@@ -7,7 +7,7 @@
         "esModuleInterop": true
     },
     "include": [
-        "src/**/*.ts"
+        "src/**/*.ts",  "src/**/*.js"
     ],
     "exclude": [
         "node_modules",

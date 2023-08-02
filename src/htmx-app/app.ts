@@ -118,13 +118,13 @@ app.post(`${QUOTES_ENDPOINT}/:id/${QUOTE_NOTES_ENDPOINT_PART}`, (req: Request, r
 app.post(QUOTE_NOTES_VALIDATE_NOTE_ENDPOINT, (req: Request, res: Response) => {
     console.log("REq body...", req.body);
     const noteError = quoteNotes.validateQuoteNote(req.body.note);
-    returnHtml(res, Pages.inputErrorIf(noteError));
+    returnHtml(res, Pages.inputErrorIf(noteError), "input-validated");
 });
 
 app.post(QUOTE_NOTES_VALIDATE_AUTHOR_ENDPOINT, (req: Request, res: Response) => {
     console.log("REq body...", req.body);
     const authorError = quoteNotes.validateQuoteAuthor(req.body.author);
-    returnHtml(res, Pages.inputErrorIf(authorError));
+    returnHtml(res, Pages.inputErrorIf(authorError), "input-validated");
 });
 
 app.get("*", async (req: Request, res: Response) => {
@@ -161,8 +161,11 @@ function returnHomePage(res: Response) {
     returnHtml(res, Pages.homePage(authors.random(3).map(a => a.name), SEARCH_AUTHORS_ENDPOINT));
 }
 
-function returnHtml(res: Response, html: string) {
+function returnHtml(res: Response, html: string, hxTrigger: string | null = null) {
     res.contentType("text/html");
+    if (hxTrigger) {
+        res.setHeader("HX-Trigger", hxTrigger);
+    }
     res.send(html);
 }
 

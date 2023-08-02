@@ -117,7 +117,6 @@ export function authorQuotePage(params: {
             <button id="add-note-btn" onclick="toggleAddNoteForm()">Add</button>
         </div>
         <form id="add-note-form" class="hidden p-4 shadow-md relative"
-            oninput="setChangeListener()"
             hx-post="${params.addQuoteNoteEndpoint(params.quoteId)}">
             ${inputWithHiddenError('note', 'Your note...', params.validateQuoteNoteEndpoint)}
             ${inputWithHiddenError('author', 'Your name...', params.validateQuoteAuthorEndpoint)}

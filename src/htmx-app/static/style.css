@@ -25,6 +25,10 @@
   }
 }
 
+.disabled {
+  opacity: 0.25;
+}
+
 .load-indicator {
   height: 0;
   visibility: hidden;
