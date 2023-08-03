@@ -11,4 +11,11 @@ export class AppError extends Error {
         readonly message: string = `There were ${errors.length}`) {
         super(message)
     }
-}
+
+    static throwIfThereAreErrors(...errors: (ErrorCode | null)[]) {
+        const definedErrors = [...errors].filter(e => e != null).map(e => e as ErrorCode);
+        if (definedErrors.length > 0) {
+            throw new AppError(definedErrors);
+        }
+    }
+}   

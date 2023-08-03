@@ -3,10 +3,10 @@ import path from "path";
 import bodyParser from "body-parser";
 import express, { Request, Response } from "express";
 import { Author, Authors } from "./authors";
-import { Quotes } from "./quotes";
+import { Quote, Quotes } from "./quotes";
 import { importDb } from "./db-import";
 import * as Pages from "./pages";
-import { QuoteNotes, QuoteNote } from "./quote-notes";
+import { QuoteNotesService, QuoteNote, InMemoryQuoteNotesRepository, QuoteNoteInput } from "./quote-notes";
 import { AppError } from "./errors";
 
 const SERVER_PORT = 8080;
@@ -24,7 +24,7 @@ const QUOTE_NOTES_VALIDATE_AUTHOR_ENDPOINT = `${QUOTES_ENDPOINT}/validate-author
 const authors = new Authors();
 const quotes = new Quotes();
 
-const quoteNotes = new QuoteNotes();
+const quoteNotesService = new QuoteNotesService(new InMemoryQuoteNotesRepository());
 
 staticFileContent("db.json")
     .then(db => importDb(db, authors, quotes))
@@ -45,6 +45,9 @@ const STYLES_PATH = function () {
 const app = express();
 
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// Weak etags are added by default
+app.set('etag', false);
 
 app.post(SEARCH_AUTHORS_ENDPOINT, (req: Request, res: Response) => {
     console.log("Searching fo authors...", req.body);
@@ -82,10 +85,9 @@ app.get(`${QUOTES_ENDPOINT}/:id`, (req: Request, res: Response) => {
     if (quote) {
         returnHtml(res, Pages.authorQuotePage({
             author: quote.author,
-            quoteId: quote.id,
             quote: quote.content,
-            notes: [],
-            addQuoteNoteEndpoint: (qId: number) => `${QUOTES_ENDPOINT}/${qId}/${QUOTE_NOTES_ENDPOINT_PART}`,
+            notes: quoteNotesService.notesOfQuote(quoteId),
+            addQuoteNoteEndpoint: addQuoteNoteEndpoint(quoteId),
             validateQuoteNoteEndpoint: QUOTE_NOTES_VALIDATE_NOTE_ENDPOINT,
             validateQuoteAuthorEndpoint: QUOTE_NOTES_VALIDATE_AUTHOR_ENDPOINT,
             renderFullPage: shouldReturnFullPage(req)
@@ -95,6 +97,22 @@ app.get(`${QUOTES_ENDPOINT}/:id`, (req: Request, res: Response) => {
     }
 });
 
+function addQuoteNoteEndpoint(quoteId: number): string {
+    return `${QUOTES_ENDPOINT}/${quoteId}/${QUOTE_NOTES_ENDPOINT_PART}`;
+}
+
+function returnAuthorQuotePage(res: Response, req: Request, quote: Quote) {
+    returnHtml(res, Pages.authorQuotePage({
+        author: quote.author,
+        quote: quote.content,
+        notes: quoteNotesService.notesOfQuote(quote.id),
+        addQuoteNoteEndpoint: `${QUOTES_ENDPOINT}/${quote.id}/${QUOTE_NOTES_ENDPOINT_PART}`,
+        validateQuoteNoteEndpoint: QUOTE_NOTES_VALIDATE_NOTE_ENDPOINT,
+        validateQuoteAuthorEndpoint: QUOTE_NOTES_VALIDATE_AUTHOR_ENDPOINT,
+        renderFullPage: shouldReturnFullPage(req)
+    }));
+}
+
 app.post(`${QUOTES_ENDPOINT}/:id/${QUOTE_NOTES_ENDPOINT_PART}`, (req: Request, res: Response) => {
     const quoteId = req.params.id as any as number;
     console.log("Req body...", req.body);
@@ -103,31 +121,37 @@ app.post(`${QUOTES_ENDPOINT}/:id/${QUOTE_NOTES_ENDPOINT_PART}`, (req: Request, r
 
     //TODO: global error handler
     try {
-        quoteNotes.addNote(note);
+        quoteNotesService.addNote(note);
+        returnHtml(res, Pages.quoteNotesPage(quoteNotesService.notesOfQuote(quoteId)),
+             hxResetFormTrigger(Pages.LABELS.quoteNoteForm));
     } catch (e) {
+        console.error("Error while adding quote!", e);
         if (e instanceof AppError) {
             returnError(res, e);
         } else {
             throw e;
         }
     }
-
-    returnNotFound(res);
 });
 
 app.post(QUOTE_NOTES_VALIDATE_NOTE_ENDPOINT, (req: Request, res: Response) => {
-    console.log("REq body...", req.body);
-    const noteError = quoteNotes.validateQuoteNote(req.body.note);
-    returnHtml(res, Pages.inputErrorIf(noteError), 
-        hxInputValidatedTrigger(Pages.INPUT_LABELS.QUOTE_NOTE_NOTE,
-        noteError ? false: true));
+    const input = req.body as QuoteNoteInput;
+    const noteError = quoteNotesService.validateQuoteNote(input.note);
+    const authorError = quoteNotesService.validateQuoteAuthor(input.author);
+
+    returnHtml(res, Pages.inputErrorIf(noteError),
+        hxFormValidatedTrigger(Pages.LABELS.quoteNoteForm,
+            noteError == null && authorError == null));
 });
 
 app.post(QUOTE_NOTES_VALIDATE_AUTHOR_ENDPOINT, (req: Request, res: Response) => {
-    console.log("REq body...", req.body);
-    const authorError = quoteNotes.validateQuoteAuthor(req.body.author);
-    returnHtml(res, Pages.inputErrorIf(authorError), 
-        hxInputValidatedTrigger(Pages.INPUT_LABELS.QUOTE_NOTE_AUTHOR, authorError ? false : true));
+    const input = req.body as QuoteNoteInput;
+    const noteError = quoteNotesService.validateQuoteNote(input.note);
+    const authorError = quoteNotesService.validateQuoteAuthor(input.author);
+
+    returnHtml(res, Pages.inputErrorIf(authorError),
+        hxFormValidatedTrigger(Pages.LABELS.quoteNoteForm,
+            noteError == null && authorError == null));
 });
 
 app.get("*", async (req: Request, res: Response) => {
@@ -172,20 +196,19 @@ function returnHtml(res: Response, html: string, hxTrigger: string | null = null
     res.send(html);
 }
 
-function hxInputValidatedTrigger(inputLabel: string, valid: boolean) {
-    return JSON.stringify({ "input-validated": {
-        "label": inputLabel,
-        "valid": valid
-    } });
+function hxFormValidatedTrigger(formLabel: string, valid: boolean) {
+    return JSON.stringify({
+        "form-validated": {
+            "label": formLabel,
+            "valid": valid
+        }
+    });
 }
 
-function returnTextOrEmpty(res: Response, text: string | null) {
-    if (text) {
-        res.contentType("text/plain");
-        res.send(text);
-    } else {
-        res.sendStatus(200);
-    }
+function hxResetFormTrigger(label: string) {
+    return JSON.stringify({
+        "reset-form": label
+    });
 }
 
 function shouldReturnFullPage(req: Request): boolean {

@@ -1,5 +1,6 @@
 import { Author } from "./authors";
 import { AppError, ErrorCode } from "./errors";
+import { QuoteNote } from "./quote-notes";
 import { Quote } from "./quotes";
 
 const HTMX_SRC = "https://unpkg.com/htmx.org@1.9.3";
@@ -14,12 +15,12 @@ const ERRORS_TRANSLATIONS = {
 export const AUTHORS_SEARCH_INPUT = "authors-search";
 const INDEX_JS_SRC = "/index.js";
 
-export const SUBMIT_ATTRIBUTE_LABEL = "data-submit";
+export const FORM_LABEL = "data-form";
+export const SUBMIT_FORM_LABEL = "data-submit-form";
 
-export const INPUT_LABELS = {
-    QUOTE_NOTE_NOTE: "quote-note-note-input",
-    QUOTE_NOTE_AUTHOR: "quote-note-author-input"
-} as any;
+export const LABELS = {
+    quoteNoteForm: "quote-note-form"
+};
 
 const HIDDEN_CLASS = "hidden";
 const DISABLED_CLASS = "disabled";
@@ -107,12 +108,12 @@ export function authorPage(author: Author, authorQuotes: Quote[], quoteEndpoint:
     return renderFullPage ? wrappedInMainPage(page) : page;
 }
 
+//TODO: simplify params
 export function authorQuotePage(params: {
     author: string,
-    quoteId: number,
     quote: string,
-    notes: string[],
-    addQuoteNoteEndpoint: Function,
+    notes: QuoteNote[],
+    addQuoteNoteEndpoint: string,
     validateQuoteNoteEndpoint: string,
     validateQuoteAuthorEndpoint: string,
     renderFullPage: boolean
@@ -125,51 +126,63 @@ export function authorQuotePage(params: {
         <p class="text-2xl">"${params.quote}"</p>
         <p class="text-xl font-bold text-right">${params.author}</p>
     </div>
-    <div class="p-4">
-        <div class="flex justify-between">
-            <p>Notes (${params.notes.length})</p>
-            <button id="${addNoteButtonId}">Add</button>
-        </div>
-        <form id="${addNoteFormId}" class="hidden p-4 shadow-md relative"
-            hx-post="${params.addQuoteNoteEndpoint(params.quoteId)}">
-            ${inputWithHiddenError('note', 'Your note...', params.validateQuoteNoteEndpoint)}
-            ${inputWithHiddenError('author', 'Your name...', params.validateQuoteAuthorEndpoint)}
-            <input id="${addNoteFormSubmitId}" class="absolute bottom-0 right-0 p-4" type="submit" value="Add">
-        </form>
+        ${quoteFormAndNotesPage(params.addQuoteNoteEndpoint,
+        params.validateQuoteNoteEndpoint,
+        params.validateQuoteAuthorEndpoint,
+        params.notes,
+        true)}
     </div>
     ${inlineJs(`
-        const noteFormErrors = {
-            note: false,
-            author: false
-        };
-
         const addNoteForm = document.getElementById("${addNoteFormId}");
         const addNoteSubmit = document.getElementById("${addNoteFormSubmitId}");
 
         document.getElementById("${addNoteButtonId}").onclick = () => {
             addNoteForm.classList.toggle("${HIDDEN_CLASS}");
         };
-
-        document.addEventListener("input-validated", e => {
-            console.log("Input validated in the author page...", e);
-            if (Events.doesEventHaveLabel(e, "${INPUT_LABELS.QUOTE_NOTE_NOTE}")) {
-                noteFormErrors.note = Events.isInputValid(e);
-            }
-            if (Events.doesEventHaveLabel(e, "${INPUT_LABELS.QUOTE_NOTE_AUTHOR}")) {
-                noteFormErrors.author = Events.isInputValid(e);
-            }
-            if (noteFormErrors.note && noteFormErrors.author) {
-                addNoteSubmit.disabled = false;
-                addNoteSubmit.classList.remove("${DISABLED_CLASS}");
-            } else {
-                addNoteSubmit.disabled = true;
-                addNoteSubmit.classList.add("${DISABLED_CLASS}");
-            }
-        });
     `)}
     `;
 
     return params.renderFullPage ? wrappedInMainPage(page) : page;
+}
+
+function quoteFormAndNotesPage(addQuoteNoteEndpoint: string,
+    validateQuoteNoteEndpoint: string,
+    validateQuoteAuthorEndpoint: string,
+    quoteNotes: QuoteNote[],
+    hiddenForm: boolean): string {
+    const addNoteButtonId = "add-note-button";
+    const addNoteFormId = "add-note-form";
+    const addNoteFormSubmitId = "add-note-form-submit";
+    const notesListId = "notes-list";
+
+    const hiddenFormClass = hiddenForm ? ` ${HIDDEN_CLASS}` : "";
+
+    return `<div class="p-4">
+        <div class="flex justify-between">
+            <p>Notes (${quoteNotes.length})</p>
+            <button id="${addNoteButtonId}">Add</button>
+        </div>
+        <form id="${addNoteFormId}" class="p-4 shadow-md relative${hiddenFormClass}"
+            hx-post="${addQuoteNoteEndpoint}"
+            hx-target="#${notesListId}"
+            ${FORM_LABEL}="${LABELS.quoteNoteForm}">
+            ${inputWithHiddenError('note', 'Your note...', validateQuoteNoteEndpoint)}
+            ${inputWithHiddenError('author', 'Your name...', validateQuoteAuthorEndpoint)}
+            <input id="${addNoteFormSubmitId}" class="absolute bottom-0 right-0 p-4" type="submit" value="Add"
+                ${SUBMIT_FORM_LABEL}="${LABELS.quoteNoteForm}">
+        </form>
+        ${quoteNotesPage(quoteNotes)}
+        </div>
+    </div>`
+}
+
+export function quoteNotesPage(quoteNotes: QuoteNote[]) {
+    return `<div id="notes-list">
+            ${quoteNotes.map(qn => `<div class="shadow-md p-4">
+                <p class="text-xl">"${qn.note}"</p>
+                <p class="text-right">Added by ${qn.noteAuthor}, at ${new Date(qn.timestamp)}</p>
+            </div>`).join('\n')}
+        </div>`;
 }
 
 export function inputWithHiddenError(name: string, placeholder: string, validateEndpoint: string): string {
@@ -206,7 +219,8 @@ function inlineJs(js: string, scoped: boolean = true): string {
             }());
         `;
     }
-    return `<script>${js}</script>`
+    // Wait for index.js
+    return `<script type="module">${js}</script>`
 }
 
 function errorModal(): string {
