@@ -14,6 +14,16 @@ const ERRORS_TRANSLATIONS = {
 export const AUTHORS_SEARCH_INPUT = "authors-search";
 const INDEX_JS_SRC = "/index.js";
 
+export const SUBMIT_ATTRIBUTE_LABEL = "data-submit";
+
+export const INPUT_LABELS = {
+    QUOTE_NOTE_NOTE: "quote-note-note-input",
+    QUOTE_NOTE_AUTHOR: "quote-note-author-input"
+} as any;
+
+const HIDDEN_CLASS = "hidden";
+const DISABLED_CLASS = "disabled";
+
 export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: string): string {
     const authorsList = suggestedAuthors.map(a => `<li class="ml-4">${a}</li>`).join("\n");
     return wrappedInMainPage(`<h1 class="m-1 text-xl">
@@ -57,7 +67,7 @@ function wrappedInMainPage(html: string): string {
       </head>
       <body>
         ${errorModal()}
-        <div hx-history="true" id="${ROOT_ID}" hx-history-elt>
+        <div hx-history="false" id="${ROOT_ID}" hx-history-elt>
             ${html}
         </div>
       </body>
@@ -107,6 +117,10 @@ export function authorQuotePage(params: {
     validateQuoteAuthorEndpoint: string,
     renderFullPage: boolean
 }): string {
+    const addNoteButtonId = "add-note-button";
+    const addNoteFormId = "add-note-form";
+    const addNoteFormSubmitId = "add-note-form-submit";
+
     const page = `<div class="shadow-md p-6">
         <p class="text-2xl">"${params.quote}"</p>
         <p class="text-xl font-bold text-right">${params.author}</p>
@@ -114,19 +128,44 @@ export function authorQuotePage(params: {
     <div class="p-4">
         <div class="flex justify-between">
             <p>Notes (${params.notes.length})</p>
-            <button id="add-note-btn" onclick="toggleAddNoteForm()">Add</button>
+            <button id="${addNoteButtonId}">Add</button>
         </div>
-        <form id="add-note-form" class="hidden p-4 shadow-md relative"
+        <form id="${addNoteFormId}" class="hidden p-4 shadow-md relative"
             hx-post="${params.addQuoteNoteEndpoint(params.quoteId)}">
             ${inputWithHiddenError('note', 'Your note...', params.validateQuoteNoteEndpoint)}
             ${inputWithHiddenError('author', 'Your name...', params.validateQuoteAuthorEndpoint)}
-            <input class="absolute bottom-0 right-0 p-4" type="submit" value="Add">
+            <input id="${addNoteFormSubmitId}" class="absolute bottom-0 right-0 p-4" type="submit" value="Add">
         </form>
     </div>
     ${inlineJs(`
-        function toggleAddNoteForm() {
-            document.getElementById("add-note-form").classList.toggle("hidden");
+        const noteFormErrors = {
+            note: false,
+            author: false
         };
+
+        const addNoteForm = document.getElementById("${addNoteFormId}");
+        const addNoteSubmit = document.getElementById("${addNoteFormSubmitId}");
+
+        document.getElementById("${addNoteButtonId}").onclick = () => {
+            addNoteForm.classList.toggle("${HIDDEN_CLASS}");
+        };
+
+        document.addEventListener("input-validated", e => {
+            console.log("Input validated in the author page...", e);
+            if (Events.doesEventHaveLabel(e, "${INPUT_LABELS.QUOTE_NOTE_NOTE}")) {
+                noteFormErrors.note = Events.isInputValid(e);
+            }
+            if (Events.doesEventHaveLabel(e, "${INPUT_LABELS.QUOTE_NOTE_AUTHOR}")) {
+                noteFormErrors.author = Events.isInputValid(e);
+            }
+            if (noteFormErrors.note && noteFormErrors.author) {
+                addNoteSubmit.disabled = false;
+                addNoteSubmit.classList.remove("${DISABLED_CLASS}");
+            } else {
+                addNoteSubmit.disabled = true;
+                addNoteSubmit.classList.add("${DISABLED_CLASS}");
+            }
+        });
     `)}
     `;
 
@@ -159,7 +198,14 @@ function pageJsSrc(src: string): string {
     return `<script src=${src}></script>`;
 }
 
-function inlineJs(js: string): string {
+function inlineJs(js: string, scoped: boolean = true): string {
+    if (scoped) {
+        js = `
+            (function() {
+                ${js}
+            }());
+        `;
+    }
     return `<script>${js}</script>`
 }
 

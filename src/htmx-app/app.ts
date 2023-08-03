@@ -104,8 +104,8 @@ app.post(`${QUOTES_ENDPOINT}/:id/${QUOTE_NOTES_ENDPOINT_PART}`, (req: Request, r
     //TODO: global error handler
     try {
         quoteNotes.addNote(note);
-    } catch(e) {
-        if (e  instanceof AppError) {
+    } catch (e) {
+        if (e instanceof AppError) {
             returnError(res, e);
         } else {
             throw e;
@@ -118,13 +118,16 @@ app.post(`${QUOTES_ENDPOINT}/:id/${QUOTE_NOTES_ENDPOINT_PART}`, (req: Request, r
 app.post(QUOTE_NOTES_VALIDATE_NOTE_ENDPOINT, (req: Request, res: Response) => {
     console.log("REq body...", req.body);
     const noteError = quoteNotes.validateQuoteNote(req.body.note);
-    returnHtml(res, Pages.inputErrorIf(noteError), "input-validated");
+    returnHtml(res, Pages.inputErrorIf(noteError), 
+        hxInputValidatedTrigger(Pages.INPUT_LABELS.QUOTE_NOTE_NOTE,
+        noteError ? false: true));
 });
 
 app.post(QUOTE_NOTES_VALIDATE_AUTHOR_ENDPOINT, (req: Request, res: Response) => {
     console.log("REq body...", req.body);
     const authorError = quoteNotes.validateQuoteAuthor(req.body.author);
-    returnHtml(res, Pages.inputErrorIf(authorError), "input-validated");
+    returnHtml(res, Pages.inputErrorIf(authorError), 
+        hxInputValidatedTrigger(Pages.INPUT_LABELS.QUOTE_NOTE_AUTHOR, authorError ? false : true));
 });
 
 app.get("*", async (req: Request, res: Response) => {
@@ -169,6 +172,13 @@ function returnHtml(res: Response, html: string, hxTrigger: string | null = null
     res.send(html);
 }
 
+function hxInputValidatedTrigger(inputLabel: string, valid: boolean) {
+    return JSON.stringify({ "input-validated": {
+        "label": inputLabel,
+        "valid": valid
+    } });
+}
+
 function returnTextOrEmpty(res: Response, text: string | null) {
     if (text) {
         res.contentType("text/plain");
@@ -180,7 +190,7 @@ function returnTextOrEmpty(res: Response, text: string | null) {
 
 function shouldReturnFullPage(req: Request): boolean {
     return (req.headers[HTMX_REQUEST_HEADER] ? false : true) &&
-        (req.headers[HTMX_RESTORE_HISTORY_REQUEST] ? false: true)
+        (req.headers[HTMX_RESTORE_HISTORY_REQUEST] ? false : true)
 }
 
 function returnNotFound(res: Response) {
