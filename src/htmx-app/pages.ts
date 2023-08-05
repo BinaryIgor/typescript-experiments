@@ -25,6 +25,10 @@ export const LABELS = {
 const HIDDEN_CLASS = "hidden";
 const DISABLED_CLASS = "disabled";
 
+export const TRIGGERS = {
+    getNotesSummary: "get-notes-summary"
+};
+
 export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: string): string {
     const authorsList = suggestedAuthors.map(a => `<li class="ml-4">${a}</li>`).join("\n");
     return wrappedInMainPage(`<h1 class="m-1 text-xl">
@@ -113,6 +117,7 @@ export function authorQuotePage(params: {
     author: string,
     quote: string,
     notes: QuoteNote[],
+    getQuotesNotesSummaryEndpoint: string,
     addQuoteNoteEndpoint: string,
     validateQuoteNoteEndpoint: string,
     validateQuoteAuthorEndpoint: string,
@@ -121,16 +126,31 @@ export function authorQuotePage(params: {
     const addNoteButtonId = "add-note-button";
     const addNoteFormId = "add-note-form";
     const addNoteFormSubmitId = "add-note-form-submit";
+    const notesListId = "notes-list";
 
     const page = `<div class="shadow-md p-6">
         <p class="text-2xl">"${params.quote}"</p>
         <p class="text-xl font-bold text-right">${params.author}</p>
     </div>
-        ${quoteFormAndNotesPage(params.addQuoteNoteEndpoint,
-        params.validateQuoteNoteEndpoint,
-        params.validateQuoteAuthorEndpoint,
-        params.notes,
-        true)}
+        <div class="p-4">
+            <div class="flex justify-between">
+                <p hx-get="${params.getQuotesNotesSummaryEndpoint}" hx-trigger="${TRIGGERS.getNotesSummary} from:body">
+                    ${quoteNotesSummaryComponent(params.notes.length)}
+                </p>
+                <button id="${addNoteButtonId}">Add</button>
+            </div>
+            <form id="${addNoteFormId}" class="p-4 shadow-md relative ${HIDDEN_CLASS}"
+                hx-post="${params.addQuoteNoteEndpoint}"
+                hx-target="#${notesListId}"
+                ${FORM_LABEL}="${LABELS.quoteNoteForm}">
+                ${inputWithHiddenError('note', 'Your note...', params.validateQuoteNoteEndpoint)}
+                ${inputWithHiddenError('author', 'Your name...', params.validateQuoteAuthorEndpoint)}
+                <input id="${addNoteFormSubmitId}" class="absolute bottom-0 right-0 p-4" type="submit" value="Add"
+                    ${SUBMIT_FORM_LABEL}="${LABELS.quoteNoteForm}">
+            </form>
+            ${quoteNotesPage(params.notes)}
+            </div>
+        </div>
     </div>
     ${inlineJs(`
         const addNoteForm = document.getElementById("${addNoteFormId}");
@@ -145,35 +165,8 @@ export function authorQuotePage(params: {
     return params.renderFullPage ? wrappedInMainPage(page) : page;
 }
 
-function quoteFormAndNotesPage(addQuoteNoteEndpoint: string,
-    validateQuoteNoteEndpoint: string,
-    validateQuoteAuthorEndpoint: string,
-    quoteNotes: QuoteNote[],
-    hiddenForm: boolean): string {
-    const addNoteButtonId = "add-note-button";
-    const addNoteFormId = "add-note-form";
-    const addNoteFormSubmitId = "add-note-form-submit";
-    const notesListId = "notes-list";
-
-    const hiddenFormClass = hiddenForm ? ` ${HIDDEN_CLASS}` : "";
-
-    return `<div class="p-4">
-        <div class="flex justify-between">
-            <p>Notes (${quoteNotes.length})</p>
-            <button id="${addNoteButtonId}">Add</button>
-        </div>
-        <form id="${addNoteFormId}" class="p-4 shadow-md relative${hiddenFormClass}"
-            hx-post="${addQuoteNoteEndpoint}"
-            hx-target="#${notesListId}"
-            ${FORM_LABEL}="${LABELS.quoteNoteForm}">
-            ${inputWithHiddenError('note', 'Your note...', validateQuoteNoteEndpoint)}
-            ${inputWithHiddenError('author', 'Your name...', validateQuoteAuthorEndpoint)}
-            <input id="${addNoteFormSubmitId}" class="absolute bottom-0 right-0 p-4" type="submit" value="Add"
-                ${SUBMIT_FORM_LABEL}="${LABELS.quoteNoteForm}">
-        </form>
-        ${quoteNotesPage(quoteNotes)}
-        </div>
-    </div>`
+export function quoteNotesSummaryComponent(quoteNotes: number): string {
+    return `Notes (${quoteNotes})`;
 }
 
 export function quoteNotesPage(quoteNotes: QuoteNote[]) {

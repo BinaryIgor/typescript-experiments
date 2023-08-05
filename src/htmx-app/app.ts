@@ -20,6 +20,7 @@ const QUOTES_ENDPOINT = "/quotes";
 const QUOTE_NOTES_ENDPOINT_PART = "notes";
 const QUOTE_NOTES_VALIDATE_NOTE_ENDPOINT = `${QUOTES_ENDPOINT}/validate-note`;
 const QUOTE_NOTES_VALIDATE_AUTHOR_ENDPOINT = `${QUOTES_ENDPOINT}/validate-author`;
+const QUOTE_NOTES_SUMMARY_ENDPOINT_PART = "notes-summary";
 
 const authors = new Authors();
 const quotes = new Quotes();
@@ -87,6 +88,7 @@ app.get(`${QUOTES_ENDPOINT}/:id`, (req: Request, res: Response) => {
             author: quote.author,
             quote: quote.content,
             notes: quoteNotesService.notesOfQuote(quoteId),
+            getQuotesNotesSummaryEndpoint: getQuoteNotesSummaryEndpoint(quoteId),
             addQuoteNoteEndpoint: addQuoteNoteEndpoint(quoteId),
             validateQuoteNoteEndpoint: QUOTE_NOTES_VALIDATE_NOTE_ENDPOINT,
             validateQuoteAuthorEndpoint: QUOTE_NOTES_VALIDATE_AUTHOR_ENDPOINT,
@@ -97,20 +99,12 @@ app.get(`${QUOTES_ENDPOINT}/:id`, (req: Request, res: Response) => {
     }
 });
 
-function addQuoteNoteEndpoint(quoteId: number): string {
-    return `${QUOTES_ENDPOINT}/${quoteId}/${QUOTE_NOTES_ENDPOINT_PART}`;
+function getQuoteNotesSummaryEndpoint(quoteId: number): string {
+    return `${QUOTES_ENDPOINT}/${quoteId}/${QUOTE_NOTES_SUMMARY_ENDPOINT_PART}`;
 }
 
-function returnAuthorQuotePage(res: Response, req: Request, quote: Quote) {
-    returnHtml(res, Pages.authorQuotePage({
-        author: quote.author,
-        quote: quote.content,
-        notes: quoteNotesService.notesOfQuote(quote.id),
-        addQuoteNoteEndpoint: `${QUOTES_ENDPOINT}/${quote.id}/${QUOTE_NOTES_ENDPOINT_PART}`,
-        validateQuoteNoteEndpoint: QUOTE_NOTES_VALIDATE_NOTE_ENDPOINT,
-        validateQuoteAuthorEndpoint: QUOTE_NOTES_VALIDATE_AUTHOR_ENDPOINT,
-        renderFullPage: shouldReturnFullPage(req)
-    }));
+function addQuoteNoteEndpoint(quoteId: number): string {
+    return `${QUOTES_ENDPOINT}/${quoteId}/${QUOTE_NOTES_ENDPOINT_PART}`;
 }
 
 app.post(`${QUOTES_ENDPOINT}/:id/${QUOTE_NOTES_ENDPOINT_PART}`, (req: Request, res: Response) => {
@@ -123,7 +117,7 @@ app.post(`${QUOTES_ENDPOINT}/:id/${QUOTE_NOTES_ENDPOINT_PART}`, (req: Request, r
     try {
         quoteNotesService.addNote(note);
         returnHtml(res, Pages.quoteNotesPage(quoteNotesService.notesOfQuote(quoteId)),
-             hxResetFormTrigger(Pages.LABELS.quoteNoteForm));
+            hxResetFormTrigger(Pages.LABELS.quoteNoteForm, { "get-notes-summary": true }));
     } catch (e) {
         console.error("Error while adding quote!", e);
         if (e instanceof AppError) {
@@ -132,6 +126,11 @@ app.post(`${QUOTES_ENDPOINT}/:id/${QUOTE_NOTES_ENDPOINT_PART}`, (req: Request, r
             throw e;
         }
     }
+});
+
+app.get(`${QUOTES_ENDPOINT}/:id/${QUOTE_NOTES_SUMMARY_ENDPOINT_PART}`, (req: Request, res: Response) => {
+    const quoteId = req.params.id as any as number;
+    returnHtml(res, Pages.quoteNotesSummaryComponent(quoteNotesService.notesOfQuoteCount(quoteId)));
 });
 
 app.post(QUOTE_NOTES_VALIDATE_NOTE_ENDPOINT, (req: Request, res: Response) => {
@@ -205,9 +204,10 @@ function hxFormValidatedTrigger(formLabel: string, valid: boolean) {
     });
 }
 
-function hxResetFormTrigger(label: string) {
+function hxResetFormTrigger(label: string, additionalTriggers: any): string {
     return JSON.stringify({
-        "reset-form": label
+        "reset-form": label,
+        ...additionalTriggers
     });
 }
 

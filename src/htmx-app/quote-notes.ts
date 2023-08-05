@@ -41,6 +41,9 @@ export class QuoteNotesService {
         return this.repository.allOfQuote(quoteId);
     }
 
+    notesOfQuoteCount(quoteId: number): number {
+        return this.repository.allOfQuote(quoteId).length;
+    }
 }
 
 export interface QuoteNotesRepository {

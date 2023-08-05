@@ -65,7 +65,11 @@ function initEventListeners() {
         const formToReset = document.querySelector(`[${FORM_LABEL}="${e.detail.value}"]`);
         console.log("Form to reset...", formToReset);
         if (formToReset) {
-            formToReset.querySelectorAll("input").forEach(i => i.value = "");
+            formToReset.querySelectorAll("input").forEach(i => {
+                if (i.type != "submit") {
+                    i.value = "";
+                }
+            });
             formToReset.querySelectorAll("textarea").forEach(i => i.value = "");
         }
     });
