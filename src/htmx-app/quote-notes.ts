@@ -38,9 +38,11 @@ export class QuoteNotesService {
 
 export interface QuoteNotesRepository {
 
-    create(note: QuoteNote): void;
+    create(note: QuoteNote): void
 
-    allOfQuote(quoteId: number): QuoteNote[];
+    allOfQuote(quoteId: number): QuoteNote[]
+
+    allNotes(): QuoteNote[]
 }
 
 export class InMemoryQuoteNotesRepository implements QuoteNotesRepository {
@@ -58,6 +60,9 @@ export class InMemoryQuoteNotesRepository implements QuoteNotesRepository {
         return this.notes.get(quoteId) ?? [];
     }
 
+    allNotes(): QuoteNote[] {
+        return [...this.notes.values()].flatMap(e => e);
+    }
 }
 
 export class QuoteNote {

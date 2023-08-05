@@ -1,2 +1,4 @@
 node_modules
 dist
+# created by users quote notes db
+**/__quote-notes.json

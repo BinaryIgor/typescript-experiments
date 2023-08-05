@@ -4,7 +4,7 @@ import bodyParser from "body-parser";
 import express, { NextFunction, Request, Response } from "express";
 import { Author, Authors } from "./authors";
 import { Quote, Quotes } from "./quotes";
-import * as DbImport from "./db-import";
+import * as FilesDb from "./files-db";
 import * as Pages from "./pages";
 import { QuoteNotesService, QuoteNote, InMemoryQuoteNotesRepository, QuoteNoteInput } from "./quote-notes";
 import { AppError, ErrorCode, Errors } from "./errors";
@@ -50,17 +50,23 @@ const authSessions = new AuthSessions(sessionsDir, sessionDuration, 60 * 1000);
 const authors = new Authors();
 const quotes = new Quotes();
 
-const quoteNotesService = new QuoteNotesService(new InMemoryQuoteNotesRepository());
+const quoteNotesRepository = new InMemoryQuoteNotesRepository();
+const quoteNotesService = new QuoteNotesService(quoteNotesRepository);
 
 const dbPath = path.join(__dirname, "static", "db");
+const quoteNotesDbPath = path.join(dbPath, "__quote-notes.json");
 
 staticFileContentOfPath(path.join(dbPath, "authors-with-quotes.json"))
-    .then(db => DbImport.importAuthorsWithQuotes(db, authors, quotes))
+    .then(db => FilesDb.importAuthorsWithQuotes(db, authors, quotes))
     .catch(e => console.log("Failed to load authors db!", e));
 
 staticFileContentOfPath(path.join(dbPath, "users.json"))
-    .then(db => DbImport.importUsers(db, userRepository))
+    .then(db => FilesDb.importUsers(db, userRepository))
     .catch(e => console.log("Failed to load users db!", e));
+
+staticFileContentOfPath(quoteNotesDbPath)
+    .then(db => FilesDb.importQuoteNotes(db, quoteNotesRepository))
+    .catch(e => console.log("Failed to load (optional!) quote notes db!", e));
 
 const STATIC_ASSETS_PATH = path.join(__dirname, "static");
 
@@ -398,6 +404,24 @@ function appErrorStatus(error: AppError): number {
     return 400;
 }
 
-app.listen(SERVER_PORT, () => {
+const server = app.listen(SERVER_PORT, () => {
     console.log(`Server started on ${SERVER_PORT}`);
 });
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
+
+function shutdown() {
+    console.log("Shutting down, dumping quote notes...");
+
+    FilesDb.dumpQuoteNotes(quoteNotesDbPath, quoteNotesRepository)
+        .then(() => console.log("Quote notes saved!"))
+        .catch(e => {
+            console.log("Problem while dumping quote notes to a file...", e);
+        })
+        .then(() => {
+            server.close(() => {
+                console.log("Server closed!");
+            });
+        });
+}

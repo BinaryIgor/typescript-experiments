@@ -39,7 +39,6 @@ export class Quotes {
 // function randomNumber(max: number): number {
 //     return Math.floor(Math.random() * max);
 // }
-
 export class Quote {
     constructor(readonly id: number, readonly author: string, readonly content: string) { }
 }
