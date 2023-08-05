@@ -1,5 +1,6 @@
 console.log("Loading index js...");
 
+const navigationId = "app-navigation";
 const FORM_LABEL = "data-form";
 const CONFIRMABLE_FORM_LABEL = "data-confirmable-form";
 const SUBMIT_FORM_LABEL = "data-submit-form";
@@ -9,7 +10,7 @@ const DISABLED_CLASS = "disabled";
 const HTMX_EVENTS = {
     configRequest: "htmx:configRequest",
     afterRequest: "htmx:afterRequest",
-    confirm: "htmx:confirm"
+    confirm: "htmx:confirm",
 };
 
 initErrorModal();

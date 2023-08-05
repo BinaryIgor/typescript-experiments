@@ -32,6 +32,8 @@ const QUOTE_NOTES_VALIDATE_NOTE_ENDPOINT = `${QUOTES_ENDPOINT}/validate-note`;
 const QUOTE_NOTES_VALIDATE_AUTHOR_ENDPOINT = `${QUOTES_ENDPOINT}/validate-author`;
 const QUOTE_NOTES_SUMMARY_ENDPOINT_PART = "notes-summary";
 
+const HX_TRIGGER_HEADER = "HX-Trigger";
+
 const userRepository = new InMemoryUserRepository();
 
 const passwordHasher = new Base64PasswordHasher();
@@ -124,8 +126,20 @@ function setCurrentUser(req: any, user: AuthUser) {
     req.user = user;
 }
 
-function currentUser(req: any): AuthUser {
+function currentUser(req: any): AuthUser | null {
     return req.user as AuthUser;
+}
+
+function currentUserOrThrow(req: any): AuthUser {
+    const user = currentUser(req);
+    if (!user) {
+        throw AppError.ofSingleError(Errors.NOT_AUTHENTICATED);
+    }
+    return user;
+}
+
+function currentUserName(req: any): string | null {
+    return currentUser(req)?.name ?? null;
 }
 
 function cookieValue(req: Request, cookie: string): string | null {
@@ -189,7 +203,9 @@ app.post(SIGN_IN_EXECUTE_ENDPOINT, asyncHandler(async (req: Request, res: Respon
 
     setSessionCookie(res, session);
 
-    returnHomePage(res);
+    setTriggerHeader(res, Pages.TRIGGERS.showNavigation);
+
+    returnHomePage(req, res);
 }));
 
 function setSessionCookie(res: Response, session: string) {
@@ -207,6 +223,10 @@ function sessionCookie(session: string, httpsOnly: boolean = false): string {
 
     return cookie;
 }
+
+app.get("/current-user", (req: Request, res: Response) => {
+    returnHtml(res, Pages.navigationComponent(currentUserName(req)));
+});
 
 app.post(SEARCH_AUTHORS_ENDPOINT, (req: Request, res: Response) => {
     console.log("Searching fo authors...", req.body);
@@ -231,7 +251,8 @@ app.get(`${AUTHORS_ENDPOINT}/:name`, (req: Request, res: Response) => {
     if (author) {
         returnHtml(res, Pages.authorPage(author, authorQuotes,
             (qId: number) => `${QUOTES_ENDPOINT}/${qId}`,
-            shouldReturnFullPage(req)));
+            shouldReturnFullPage(req),
+            currentUserName(req)));
     } else {
         returnNotFound(res);
     }
@@ -250,7 +271,8 @@ app.get(`${QUOTES_ENDPOINT}/:id`, (req: Request, res: Response) => {
             addQuoteNoteEndpoint: addQuoteNoteEndpoint(quoteId),
             validateQuoteNoteEndpoint: QUOTE_NOTES_VALIDATE_NOTE_ENDPOINT,
             validateQuoteAuthorEndpoint: QUOTE_NOTES_VALIDATE_AUTHOR_ENDPOINT,
-            renderFullPage: shouldReturnFullPage(req)
+            renderFullPage: shouldReturnFullPage(req),
+            currentUser: currentUserName(req)
         }));
     } else {
         returnNotFound(res);
@@ -277,7 +299,7 @@ app.post(`${QUOTES_ENDPOINT}/:id/${QUOTE_NOTES_ENDPOINT_PART}`, (req: Request, r
     const quoteId = req.params.id as any as number;
 
     const input = req.body as QuoteNoteInput;
-    const author = currentUser(req);
+    const author = currentUserOrThrow(req);
 
     const note = new QuoteNote(quoteId, input.note, author.id, Date.now());
 
@@ -300,6 +322,9 @@ app.post(QUOTE_NOTES_VALIDATE_NOTE_ENDPOINT, (req: Request, res: Response) => {
             noteError == null));
 });
 
+app.get("/", (req: Request, res: Response) => returnHomePage(req, res));
+app.get("/index.html", (req: Request, res: Response) => returnHomePage(req, res));
+
 app.get("*", async (req: Request, res: Response) => {
     console.log("REq body...", req.body);
     if (req.url.includes("style")) {
@@ -308,7 +333,7 @@ app.get("*", async (req: Request, res: Response) => {
         const fileName = req.url.substring(req.url.lastIndexOf("/"));
         returnJs(res, await staticFileContentOfPath(path.join(STATIC_ASSETS_PATH, fileName)));
     } else {
-        returnHomePage(res);
+        returnNotFound(res);
     }
 })
 
@@ -330,16 +355,21 @@ async function returnJs(res: Response, js: string) {
     res.send(js);
 }
 
-function returnHomePage(res: Response) {
-    returnHtml(res, Pages.homePage(authors.random(3).map(a => a.name), SEARCH_AUTHORS_ENDPOINT));
+function returnHomePage(req: Request, res: Response) {
+    returnHtml(res, Pages.homePage(authors.random(3).map(a => a.name), SEARCH_AUTHORS_ENDPOINT,
+        shouldReturnFullPage(req), currentUserName(req)));
 }
 
 function returnHtml(res: Response, html: string, hxTrigger: string | null = null) {
     res.contentType("text/html");
     if (hxTrigger) {
-        res.setHeader("HX-Trigger", hxTrigger);
+        setTriggerHeader(res, hxTrigger);
     }
     res.send(html);
+}
+
+function setTriggerHeader(res: Response, trigger: string) {
+    res.setHeader(HX_TRIGGER_HEADER, trigger);
 }
 
 function hxFormValidatedTrigger(formLabel: string, valid: boolean) {
@@ -386,7 +416,7 @@ app.use((error: any, req: Request, res: Response, next: NextFunction) => {
         errors = ["UNKOWN_ERROR"];
     }
     res.status(status);
-    returnHtml(res, Pages.errorPage(errors, shouldReturnFullPage(req)));
+    returnHtml(res, Pages.errorPage(errors, shouldReturnFullPage(req), currentUserName(req)));
 });
 
 function appErrorStatus(error: AppError): number {

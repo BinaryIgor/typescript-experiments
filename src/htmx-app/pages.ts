@@ -6,7 +6,6 @@ import { Quote } from "./quotes";
 const HTMX_SRC = "https://unpkg.com/htmx.org@1.9.3";
 const ROOT_ID = "app";
 
-
 const ERRORS_TRANSLATIONS = {
     INVALID_QUOTE_NOTE_CONTENT: "Note can't be empty and needs to have 3 - 1000 characters",
     INVALID_QUOTE_NOTE_AUTHOR: "Note author can't be empty and needs to have 3 - 50 characters"
@@ -28,7 +27,8 @@ const HIDDEN_CLASS = "hidden";
 const DISABLED_CLASS = "disabled";
 
 export const TRIGGERS = {
-    getNotesSummary: "get-notes-summary"
+    getNotesSummary: "get-notes-summary",
+    showNavigation: "show-navigation"
 };
 
 //TODO: proper signIn page!
@@ -45,41 +45,44 @@ export function signInPage(signInEndpoint: string,
         <input class="absolute bottom-0 right-0 p-4 ${DISABLED_CLASS}" type="submit" value="Sign In"
         ${SUBMIT_FORM_LABEL}="${LABELS.signInForm}" disabled>
     </form>`;
-    return renderFullPage ? wrappedInMainPage(page) : page;
+    return renderFullPage ? wrappedInMainPage(page, null) : page;
 }
 
-export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: string): string {
+export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: string,
+    renderFullPage: boolean,
+    currentUser: string | null): string {
     const authorsList = suggestedAuthors.map(a => `<li class="ml-4">${a}</li>`).join("\n");
-    return wrappedInMainPage(`<h1 class="m-1 text-xl">
-                Some authors ought to be there...
-            </h1>
+    const page = `<h1 class="m-1 text-xl">
+        Some authors ought to be there...
+    </h1>
 
-            <div class="m-2">
-                If in doubt, some sugestions:
-                <ul class="m-2 list-disc">
-                    ${authorsList}
-                </ul>
-            </div>
-        
-            <div class="w-full p-2">
-                <input class="w-full p-1" name="${AUTHORS_SEARCH_INPUT}" 
-                    placeholder="Search for interesting authors by their name or content from quotes..."
-                    hx-trigger="keyup changed delay:500ms" 
-                    hx-post="${searchAuthorsEndpoint}" 
-                    hx-target="#search-results"
-                    hx-indicator="#search-results-indicator">
-                <!--button class="w-full text-white bg-black p-1 mt-1 text-lg" 
-                    hx-post="${searchAuthorsEndpoint}" hx-target="#search-results"
-                    hx-include="[name='${AUTHORS_SEARCH_INPUT}']">Search</button-->
-                <div id="search-results-indicator" class="load-indicator">
-                    Loading results...
-                </div>
-                <div id="search-results"></div>
-            </div>
-        </div>`);
+    <div class="m-2">
+        If in doubt, some sugestions:
+        <ul class="m-2 list-disc">
+            ${authorsList}
+        </ul>
+    </div>
+
+    <div class="w-full p-2">
+        <input class="w-full p-1" name="${AUTHORS_SEARCH_INPUT}" 
+            placeholder="Search for interesting authors by their name or content from quotes..."
+            hx-trigger="keyup changed delay:500ms" 
+            hx-post="${searchAuthorsEndpoint}" 
+            hx-target="#search-results"
+            hx-indicator="#search-results-indicator">
+        <!--button class="w-full text-white bg-black p-1 mt-1 text-lg" 
+            hx-post="${searchAuthorsEndpoint}" hx-target="#search-results"
+            hx-include="[name='${AUTHORS_SEARCH_INPUT}']">Search</button-->
+        <div id="search-results-indicator" class="load-indicator">
+            Loading results...
+        </div>
+        <div id="search-results"></div>
+    </div>
+    </div>`
+    return renderFullPage ? wrappedInMainPage(page, currentUser) : page;
 }
 
-function wrappedInMainPage(html: string): string {
+function wrappedInMainPage(html: string, currentUser: string | null): string {
     return `<!DOCTYPE html>
     <html lang="en">
       <head>
@@ -89,9 +92,11 @@ function wrappedInMainPage(html: string): string {
         <title>Authors</title>
         <link rel="stylesheet" href="/style.css"/>
       </head>
-      <body>
+      <body hx-history="false">
+        ${navigationComponent(currentUser)}
         ${confirmableModal()}
         ${errorModal()}
+        
         <div hx-history="false" id="${ROOT_ID}" hx-history-elt>
             ${html}
         </div>
@@ -102,7 +107,6 @@ function wrappedInMainPage(html: string): string {
     </html>`;
 }
 
-
 export function authorsSearchResult(result: Author[], authorEndpoint: Function): string {
     const resultList = result.map(a =>
         `<div class="shadow-md p-4 cursor-pointer" hx-target="#${ROOT_ID}" hx-get="${authorEndpoint(a)}" hx-push-url="true">
@@ -112,7 +116,9 @@ export function authorsSearchResult(result: Author[], authorEndpoint: Function):
     return `<div class="space-y-4">${resultList}</div>`
 }
 
-export function authorPage(author: Author, authorQuotes: Quote[], quoteEndpoint: Function, renderFullPage: boolean): string {
+export function authorPage(author: Author, authorQuotes: Quote[], quoteEndpoint: Function, 
+    renderFullPage: boolean,
+    currentUser: string | null): string {
     const quotes = authorQuotes.map(q => `
         <div class="shadow-md p-4 cursor-pointer"
             hx-push-url="true" hx-target="#${ROOT_ID}" hx-get="${quoteEndpoint(q.id)}">
@@ -130,7 +136,7 @@ export function authorPage(author: Author, authorQuotes: Quote[], quoteEndpoint:
     </div>
     `;
 
-    return renderFullPage ? wrappedInMainPage(page) : page;
+    return renderFullPage ? wrappedInMainPage(page, currentUser) : page;
 }
 
 //TODO: simplify params
@@ -142,7 +148,8 @@ export function authorQuotePage(params: {
     addQuoteNoteEndpoint: string,
     validateQuoteNoteEndpoint: string,
     validateQuoteAuthorEndpoint: string,
-    renderFullPage: boolean
+    renderFullPage: boolean,
+    currentUser: string | null
 }): string {
     const addNoteButtonId = "add-note-button";
     const addNoteFormId = "add-note-form";
@@ -186,7 +193,7 @@ export function authorQuotePage(params: {
     `)}
     `;
 
-    return params.renderFullPage ? wrappedInMainPage(page) : page;
+    return params.renderFullPage ? wrappedInMainPage(page, params.currentUser) : page;
 }
 
 export function quoteNotesSummaryComponent(quoteNotes: number): string {
@@ -246,6 +253,16 @@ function errorModal(): string {
     </div>`;
 }
 
+export function navigationComponent(currentUser: string | null): string {
+    const hiddenClass = currentUser ? "" : ` ${HIDDEN_CLASS}`;
+    return `<div id="app-navigation" class="sticky top-0 w-full p-4 border-b-2 border-black bg-white${hiddenClass}"
+        hx-get="/current-user"
+        hx-trigger="${TRIGGERS.showNavigation} from:body"
+        hx-swap="outerHTML">
+        Some naive navigation for a reader: ${currentUser}
+    </div>`;
+}
+
 function confirmableModal(): string {
     return `<div class="modal ${HIDDEN_CLASS}" id="confirmable-modal">
         <div class="modal-content relative">
@@ -258,12 +275,12 @@ function confirmableModal(): string {
 }
 
 //TODO: style it!
-export function errorPage(errors: ErrorCode[], renderFullPage: boolean): string {
+export function errorPage(errors: ErrorCode[], renderFullPage: boolean, currentUser: string | null): string {
     const page = `<div>
         <h1 class="m-1 text-xl">Something went wrong...</h1>
         ${errorsComponent(errors)}
     </div>`;
-    return renderFullPage ? wrappedInMainPage(page) : page;
+    return renderFullPage ? wrappedInMainPage(page, currentUser) : page;
 }
 
 export class QuoteNoteView {
