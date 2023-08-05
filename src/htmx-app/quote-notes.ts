@@ -27,8 +27,29 @@ export class QuoteNotesService {
             null : Errors.INVALID_QUOTE_NOTE_CONTENT;
     }
 
-    notesOfQuote(quoteId: number): QuoteNote[] {
-        return this.repository.allOfQuote(quoteId);
+    notesOfQuoteSortedByTimestamp(quoteId: number, ascending: boolean = false): QuoteNote[] {
+        function ascendingSort(a: QuoteNote, b: QuoteNote):number {
+            if (a.timestamp > b.timestamp) {
+                return 1;
+            }
+            if (b.timestamp > a.timestamp) {
+                return -1;
+            }
+            return 0;
+        }
+
+        function descendingSort(a: QuoteNote, b: QuoteNote):number {
+            if (a.timestamp > b.timestamp) {
+                return -1;
+            }
+            if (b.timestamp > a.timestamp) {
+                return 1;
+            }
+            return 0;
+        }
+
+        const sort = ascending ? ascendingSort :descendingSort;
+        return this.repository.allOfQuote(quoteId).sort(sort);
     }
 
     notesOfQuoteCount(quoteId: number): number {

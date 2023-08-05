@@ -42,8 +42,8 @@ export function signInPage(signInEndpoint: string,
         hx-replace-url="/">
         ${inputWithHiddenError("name", "Your name...", validateNameEndpoint)}
         ${inputWithHiddenError("password", "Your password...", validatePasswordEndpoint, "password")}
-        <input class="absolute bottom-0 right-0 p-4" type="submit" value="Sign In"
-        ${SUBMIT_FORM_LABEL}="${LABELS.signInForm}">
+        <input class="absolute bottom-0 right-0 p-4 ${DISABLED_CLASS}" type="submit" value="Sign In"
+        ${SUBMIT_FORM_LABEL}="${LABELS.signInForm}" disabled>
     </form>`;
     return renderFullPage ? wrappedInMainPage(page) : page;
 }
@@ -168,7 +168,8 @@ export function authorQuotePage(params: {
                 ${FORM_LABEL}="${LABELS.quoteNoteForm}"
                 ${CONFIRMABLE_FORM_LABEL}="${confirmQuoteNoteMessage}">
                 ${inputWithHiddenError('note', 'Your note...', params.validateQuoteNoteEndpoint)}
-                <input id="${addNoteFormSubmitId}" class="absolute bottom-0 right-0 p-4 ${DISABLED_CLASS}" type="submit" value="Add"
+                <input id="${addNoteFormSubmitId}" class="absolute bottom-0 right-0 p-4 ${DISABLED_CLASS}"
+                    type="submit" value="Add"
                     ${SUBMIT_FORM_LABEL}="${LABELS.quoteNoteForm}" disabled>
             </form>
             ${quoteNotesPage(params.notes)}

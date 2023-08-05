@@ -82,8 +82,8 @@ function initConfirmableModal() {
         if (confirmableMessage) {
             e.preventDefault();
             confirmableEvent = e;
-            showModal();
             confirmableModalContent.innerHTML = confirmableMessage;
+            showModal();
         }
     });
 

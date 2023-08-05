@@ -258,7 +258,7 @@ app.get(`${QUOTES_ENDPOINT}/:id`, (req: Request, res: Response) => {
 });
 
 function quoteNoteViews(quoteId: number): Pages.QuoteNoteView[] {
-    const notes = quoteNotesService.notesOfQuote(quoteId);
+    const notes = quoteNotesService.notesOfQuoteSortedByTimestamp(quoteId);
     const authorIds = notes.map(n => n.noteAuthorId);
     const authors = userService.usersOfIds(authorIds);
 
