@@ -7,7 +7,7 @@ const MIN_AUTHOR_LENGTH = 3;
 const MAX_AUTHOR_LENGTH = 50;
 
 export class QuoteNoteInput {
-    constructor(readonly note: string, readonly author: string) { }
+    constructor(readonly note: string) { }
 }
 
 export class QuoteNotesService {
@@ -16,12 +16,8 @@ export class QuoteNotesService {
 
     //TODO: better validation!
     addNote(quoteNote: QuoteNote) {
-        const errors = [];
-
         const quoteError = this.validateQuoteNote(quoteNote.note);
-        const authorError = this.validateQuoteAuthor(quoteNote.noteAuthor);
-
-        AppError.throwIfThereAreErrors(quoteError, authorError);
+        AppError.throwIfThereAreErrors(quoteError);
 
         this.repository.create(quoteNote);
     }
@@ -29,12 +25,6 @@ export class QuoteNotesService {
     validateQuoteNote(note: string): ErrorCode | null {
         return Validator.hasAnyContent(note) && Validator.hasLength(note, MIN_NOTE_LENGTH, MAX_NOTE_LENGTH) ?
             null : Errors.INVALID_QUOTE_NOTE_CONTENT;
-    }
-
-
-    validateQuoteAuthor(author: string): ErrorCode | null {
-        return Validator.hasAnyContent(author) && Validator.hasLength(author, MIN_AUTHOR_LENGTH, MAX_AUTHOR_LENGTH) ?
-            null : Errors.INVALID_QUOTE_NOTE_AUTHOR;
     }
 
     notesOfQuote(quoteId: number): QuoteNote[] {
@@ -73,6 +63,6 @@ export class InMemoryQuoteNotesRepository implements QuoteNotesRepository {
 export class QuoteNote {
     constructor(readonly quoteId: number,
         readonly note: string,
-        readonly noteAuthor: string,
+        readonly noteAuthorId: number,
         readonly timestamp: number) { }
 }

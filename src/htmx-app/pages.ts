@@ -135,7 +135,7 @@ export function authorPage(author: Author, authorQuotes: Quote[], quoteEndpoint:
 export function authorQuotePage(params: {
     author: string,
     quote: string,
-    notes: QuoteNote[],
+    notes: QuoteNoteView[],
     getQuotesNotesSummaryEndpoint: string,
     addQuoteNoteEndpoint: string,
     validateQuoteNoteEndpoint: string,
@@ -163,7 +163,6 @@ export function authorQuotePage(params: {
                 hx-target="#${notesListId}"
                 ${FORM_LABEL}="${LABELS.quoteNoteForm}">
                 ${inputWithHiddenError('note', 'Your note...', params.validateQuoteNoteEndpoint)}
-                ${inputWithHiddenError('author', 'Your name...', params.validateQuoteAuthorEndpoint)}
                 <input id="${addNoteFormSubmitId}" class="absolute bottom-0 right-0 p-4" type="submit" value="Add"
                     ${SUBMIT_FORM_LABEL}="${LABELS.quoteNoteForm}">
             </form>
@@ -188,11 +187,11 @@ export function quoteNotesSummaryComponent(quoteNotes: number): string {
     return `Notes (${quoteNotes})`;
 }
 
-export function quoteNotesPage(quoteNotes: QuoteNote[]) {
+export function quoteNotesPage(quoteNotes: QuoteNoteView[]) {
     return `<div id="notes-list">
             ${quoteNotes.map(qn => `<div class="shadow-md p-4">
                 <p class="text-xl">"${qn.note}"</p>
-                <p class="text-right">Added by ${qn.noteAuthor}, at ${new Date(qn.timestamp)}</p>
+                <p class="text-right">Added by ${qn.noteAuthor}, at ${qn.timestamp}</p>
             </div>`).join('\n')}
         </div>`;
 }
@@ -218,10 +217,6 @@ function translatedError(error: ErrorCode): string {
 export function inputErrorIf(error: ErrorCode | null = null): string {
     const translated = error ? translatedError(error) : "";
     return `<p class="error-message ${translated ? 'active' : 'inactive'}">${translated}</p>`
-}
-
-function pageJsSrc(src: string): string {
-    return `<script src=${src}></script>`;
 }
 
 function inlineJs(js: string, scoped: boolean = true): string {
@@ -252,4 +247,11 @@ export function errorPage(errors: ErrorCode[], renderFullPage: boolean): string 
         ${errorsComponent(errors)}
     </div>`;
     return renderFullPage ? wrappedInMainPage(page) : page;
+}
+
+export class QuoteNoteView {
+    constructor(readonly quoteId: number,
+        readonly note: string,
+        readonly noteAuthor: string,
+        readonly timestamp: string) { }
 }

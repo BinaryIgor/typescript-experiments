@@ -10,6 +10,7 @@ import { QuoteNotesService, QuoteNote, InMemoryQuoteNotesRepository, QuoteNoteIn
 import { AppError, ErrorCode, Errors } from "./errors";
 import { Base64PasswordHasher, InMemoryUserRepository, UserService, UserSignInInput } from "./users";
 import { AuthSessions, AuthUser } from "./auth";
+import * as ViewMapper from "./view-mapper";
 
 const SERVER_PORT = 8080;
 
@@ -97,7 +98,9 @@ app.use(asyncHandler(async (req: Request, res: Response, next: NextFunction) => 
         user = null;
     }
 
-    console.log("user...", user);
+    if (user) {
+        setCurrentUser(req, user);
+    }
 
     if (isPublicRequest(req) || user) {
         console.log("Request is public or we have a user!", user);
@@ -110,6 +113,14 @@ app.use(asyncHandler(async (req: Request, res: Response, next: NextFunction) => 
         res.redirect(SIGN_IN_ENDPOINT);
     }
 }));
+
+function setCurrentUser(req: any, user: AuthUser) {
+    req.user = user;
+}
+
+function currentUser(req: any): AuthUser {
+    return req.user as AuthUser;
+}
 
 function cookieValue(req: Request, cookie: string): string | null {
     const cookiesHeader = req.headers.cookie;
@@ -228,7 +239,7 @@ app.get(`${QUOTES_ENDPOINT}/:id`, (req: Request, res: Response) => {
         returnHtml(res, Pages.authorQuotePage({
             author: quote.author,
             quote: quote.content,
-            notes: quoteNotesService.notesOfQuote(quoteId),
+            notes: quoteNoteViews(quoteId),
             getQuotesNotesSummaryEndpoint: getQuoteNotesSummaryEndpoint(quoteId),
             addQuoteNoteEndpoint: addQuoteNoteEndpoint(quoteId),
             validateQuoteNoteEndpoint: QUOTE_NOTES_VALIDATE_NOTE_ENDPOINT,
@@ -240,6 +251,14 @@ app.get(`${QUOTES_ENDPOINT}/:id`, (req: Request, res: Response) => {
     }
 });
 
+function quoteNoteViews(quoteId: number): Pages.QuoteNoteView[] {
+    const notes = quoteNotesService.notesOfQuote(quoteId);
+    const authorIds = notes.map(n => n.noteAuthorId);
+    const authors = userService.usersOfIds(authorIds);
+
+    return ViewMapper.toQuoteNoteViews(notes, authors);
+}
+
 function getQuoteNotesSummaryEndpoint(quoteId: number): string {
     return `${QUOTES_ENDPOINT}/${quoteId}/${QUOTE_NOTES_SUMMARY_ENDPOINT_PART}`;
 }
@@ -250,12 +269,14 @@ function addQuoteNoteEndpoint(quoteId: number): string {
 
 app.post(`${QUOTES_ENDPOINT}/:id/${QUOTE_NOTES_ENDPOINT_PART}`, (req: Request, res: Response) => {
     const quoteId = req.params.id as any as number;
-    console.log("Req body...", req.body);
 
-    const note = new QuoteNote(quoteId, req.body.note, req.body.author, Date.now());
+    const input = req.body as QuoteNoteInput;
+    const author = currentUser(req);
+
+    const note = new QuoteNote(quoteId, input.note, author.id, Date.now());
 
     quoteNotesService.addNote(note);
-    returnHtml(res, Pages.quoteNotesPage(quoteNotesService.notesOfQuote(quoteId)),
+    returnHtml(res, Pages.quoteNotesPage(quoteNoteViews(quoteId)),
         hxResetFormTrigger(Pages.LABELS.quoteNoteForm,
             hxAdditionalTrigersOfKeys(Pages.TRIGGERS.getNotesSummary)));
 });
@@ -266,27 +287,11 @@ app.get(`${QUOTES_ENDPOINT}/:id/${QUOTE_NOTES_SUMMARY_ENDPOINT_PART}`, (req: Req
 });
 
 app.post(QUOTE_NOTES_VALIDATE_NOTE_ENDPOINT, (req: Request, res: Response) => {
-    const { noteError, authorError } = validateQuoteNotesInput(req);
-    returnHtml(res, Pages.inputErrorIf(noteError),
-        hxFormValidatedTrigger(Pages.LABELS.quoteNoteForm,
-            noteError == null && authorError == null));
-});
-
-function validateQuoteNotesInput(req: Request): {
-    noteError: ErrorCode | null,
-    authorError: ErrorCode | null
-} {
     const input = req.body as QuoteNoteInput;
     const noteError = quoteNotesService.validateQuoteNote(input.note);
-    const authorError = quoteNotesService.validateQuoteAuthor(input.author);
-    return { noteError, authorError };
-}
-
-app.post(QUOTE_NOTES_VALIDATE_AUTHOR_ENDPOINT, (req: Request, res: Response) => {
-    const { noteError, authorError } = validateQuoteNotesInput(req);
-    returnHtml(res, Pages.inputErrorIf(authorError),
+    returnHtml(res, Pages.inputErrorIf(noteError),
         hxFormValidatedTrigger(Pages.LABELS.quoteNoteForm,
-            noteError == null && authorError == null));
+            noteError == null));
 });
 
 app.get("*", async (req: Request, res: Response) => {

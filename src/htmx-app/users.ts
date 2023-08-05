@@ -45,6 +45,10 @@ export class UserService {
             && Validator.hasLength(password, MIN_USER_PASSWORD_LENGTH, MAX_USER_PASSWORD_LENGTH) ?
             null : Errors.INVALID_USER_PASSWORD;
     }
+
+    usersOfIds(ids: number[]): Map<number, User> {
+        return this.userRepository.ofIds(ids);
+    }
 }
 
 
@@ -58,6 +62,8 @@ export interface UserRepository {
     
     ofId(id: number): User | null;
 
+    ofIds(ids: number[]): Map<number, User>
+
     ofName(name: string): User | null;
     
     create(user: User): void;
@@ -69,6 +75,17 @@ export class InMemoryUserRepository implements UserRepository {
 
     ofId(id: number): User | null {
         return this.db.get(id) ?? null;
+    }
+
+    ofIds(ids: number[]): Map<number, User> {
+        const found = new Map<number, User>();
+        ids.forEach(id => {
+            const user = this.ofId(id);
+            if (user) {
+                found.set(id, user);
+            }
+        });
+        return found;
     }
 
     ofName(name: string): User | null {
