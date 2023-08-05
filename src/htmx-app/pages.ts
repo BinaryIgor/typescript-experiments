@@ -168,8 +168,8 @@ export function authorQuotePage(params: {
                 ${FORM_LABEL}="${LABELS.quoteNoteForm}"
                 ${CONFIRMABLE_FORM_LABEL}="${confirmQuoteNoteMessage}">
                 ${inputWithHiddenError('note', 'Your note...', params.validateQuoteNoteEndpoint)}
-                <input id="${addNoteFormSubmitId}" class="absolute bottom-0 right-0 p-4" type="submit" value="Add"
-                    ${SUBMIT_FORM_LABEL}="${LABELS.quoteNoteForm}">
+                <input id="${addNoteFormSubmitId}" class="absolute bottom-0 right-0 p-4 ${DISABLED_CLASS}" type="submit" value="Add"
+                    ${SUBMIT_FORM_LABEL}="${LABELS.quoteNoteForm}" disabled>
             </form>
             ${quoteNotesPage(params.notes)}
             </div>
