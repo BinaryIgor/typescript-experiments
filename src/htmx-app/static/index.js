@@ -5,6 +5,7 @@ const SUBMIT_FORM_LABEL = "data-submit-form";
 const DISABLED_CLASS = "disabled";
 
 const HTMX_EVENTS = {
+    configRequest: "htmx:configRequest",
     afterRequest: "htmx:afterRequest"
 };
 
@@ -72,6 +73,11 @@ function initEventListeners() {
             });
             formToReset.querySelectorAll("textarea").forEach(i => i.value = "");
         }
+    });
+
+    document.addEventListener(HTMX_EVENTS.configRequest, e => {
+        console.log("Let's configure the request...", e);
+        e.detail.headers['Authentication'] = crypto.randomUUID();
     });
 }
 

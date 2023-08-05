@@ -1,18 +1,27 @@
 import fs from "fs";
 import path from "path";
 import bodyParser from "body-parser";
-import express, { Request, Response } from "express";
+import express, { NextFunction, Request, Response } from "express";
 import { Author, Authors } from "./authors";
 import { Quote, Quotes } from "./quotes";
-import { importDb } from "./db-import";
+import * as DbImport from "./db-import";
 import * as Pages from "./pages";
 import { QuoteNotesService, QuoteNote, InMemoryQuoteNotesRepository, QuoteNoteInput } from "./quote-notes";
-import { AppError } from "./errors";
+import { AppError, ErrorCode, Errors } from "./errors";
+import { Base64PasswordHasher, InMemoryUserRepository, UserService, UserSignInInput } from "./users";
+import { AuthSessions, AuthUser } from "./auth";
 
 const SERVER_PORT = 8080;
 
 const HTMX_REQUEST_HEADER = "hx-request";
 const HTMX_RESTORE_HISTORY_REQUEST = "hx-history-restore-request";
+
+const SESSION_COOKIE = "session-id";
+
+const SIGN_IN_ENDPOINT = "/sign-in";
+const SIGN_IN_EXECUTE_ENDPOINT = `${SIGN_IN_ENDPOINT}/execute`;
+const SIGN_IN_VALIDATE_NAME_ENDPOINT = `${SIGN_IN_ENDPOINT}/validate-name`;
+const SIGN_IN_VALIDATE_PASSWORD_ENDPOINT = `${SIGN_IN_ENDPOINT}/validate-password`;
 
 const SEARCH_AUTHORS_ENDPOINT = "/search-authors";
 const AUTHORS_ENDPOINT = "/authors";
@@ -22,14 +31,35 @@ const QUOTE_NOTES_VALIDATE_NOTE_ENDPOINT = `${QUOTES_ENDPOINT}/validate-note`;
 const QUOTE_NOTES_VALIDATE_AUTHOR_ENDPOINT = `${QUOTES_ENDPOINT}/validate-author`;
 const QUOTE_NOTES_SUMMARY_ENDPOINT_PART = "notes-summary";
 
+const userRepository = new InMemoryUserRepository();
+
+const passwordHasher = new Base64PasswordHasher();
+const userService = new UserService(userRepository, passwordHasher);
+
+//5 hours;
+const sessionDuration = 5 * 60 * 60 * 1000;
+const sessionsDir = path.join("/tmp", "session");
+
+if (!fs.existsSync(sessionsDir)) {
+    fs.mkdirSync(sessionsDir);
+}
+
+const authSessions = new AuthSessions(sessionsDir, sessionDuration, 60 * 1000);
+
 const authors = new Authors();
 const quotes = new Quotes();
 
 const quoteNotesService = new QuoteNotesService(new InMemoryQuoteNotesRepository());
 
-staticFileContent("db.json")
-    .then(db => importDb(db, authors, quotes))
+const dbPath = path.join(__dirname, "static", "db");
+
+staticFileContentOfPath(path.join(dbPath, "authors-with-quotes.json"))
+    .then(db => DbImport.importAuthorsWithQuotes(db, authors, quotes))
     .catch(e => console.log("Failed to load authors db!", e));
+
+staticFileContentOfPath(path.join(dbPath, "users.json"))
+    .then(db => DbImport.importUsers(db, userRepository))
+    .catch(e => console.log("Failed to load users db!", e));
 
 const STATIC_ASSETS_PATH = path.join(__dirname, "static");
 
@@ -49,6 +79,117 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Weak etags are added by default
 app.set('etag', false);
+
+const asyncHandler = (fn: Function) => (req: Request, res: Response, next: NextFunction) => {
+    return Promise.resolve(fn(req, res, next)).catch(next);
+}
+
+app.use(asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    console.log("Just intercepting every single request with cookie", req.path, req.headers);
+
+    const session = cookieValue(req, SESSION_COOKIE);
+    let user: AuthUser | null;
+
+    if (session) {
+        user = await authSessions.authenticate(session);
+        console.log("user of session...", user);
+    } else {
+        user = null;
+    }
+
+    console.log("user...", user);
+
+    if (isPublicRequest(req) || user) {
+        console.log("Request is public or we have a user!", user);
+        if (user && session && await authSessions.shouldRefresh(session)) {
+            await authSessions.refresh(session);
+            setSessionCookie(res, session);
+        }
+        next();
+    } else {
+        res.redirect(SIGN_IN_ENDPOINT);
+    }
+}));
+
+function cookieValue(req: Request, cookie: string): string | null {
+    const cookiesHeader = req.headers.cookie;
+    if (!cookiesHeader) {
+        return null;
+    }
+    const cookies = cookiesHeader.split(';');
+    for (let c of cookies) {
+        const kv = c.split("=", 2);
+        if (kv.length != 2) {
+            continue;
+        }
+        const k = kv[0].trim();
+        const v = kv[1].trim();
+        if (k == cookie) {
+            return v;
+        }
+    }
+
+    return null;
+}
+
+function isPublicRequest(req: Request): boolean {
+    return req.path.startsWith(SIGN_IN_ENDPOINT) ||
+        req.path.includes(".css") || req.path.includes(".js") || req.path.includes(".ico");
+}
+
+app.get(SIGN_IN_ENDPOINT, (req: Request, res: Response) => {
+    returnHtml(res,
+        Pages.signInPage(SIGN_IN_EXECUTE_ENDPOINT, SIGN_IN_VALIDATE_NAME_ENDPOINT, SIGN_IN_VALIDATE_PASSWORD_ENDPOINT,
+            shouldReturnFullPage(req)));
+});
+
+app.post(SIGN_IN_VALIDATE_NAME_ENDPOINT, (req: Request, res: Response) => {
+    const { nameError, passwordError } = validateSignInInput(req);
+    returnHtml(res, Pages.inputErrorIf(nameError),
+        hxFormValidatedTrigger(Pages.LABELS.signInForm,
+            nameError == null && passwordError == null));
+});
+
+function validateSignInInput(req: Request) {
+    const input = req.body as UserSignInInput;
+    const nameError = userService.validateUserName(input.name);
+    const passwordError = userService.validateUserPassword(input.password);
+    return { nameError, passwordError };
+}
+
+app.post(SIGN_IN_VALIDATE_PASSWORD_ENDPOINT, (req: Request, res: Response) => {
+    const { nameError, passwordError } = validateSignInInput(req);
+    returnHtml(res, Pages.inputErrorIf(passwordError),
+        hxFormValidatedTrigger(Pages.LABELS.signInForm,
+            nameError == null && passwordError == null));
+});
+
+app.post(SIGN_IN_EXECUTE_ENDPOINT, asyncHandler(async (req: Request, res: Response) => {
+    const input = req.body as UserSignInInput;
+    const user = userService.signIn(input.name, input.password);
+
+    const session = await authSessions.create(user);
+
+    setSessionCookie(res, session);
+
+    returnHomePage(res);
+}));
+
+function setSessionCookie(res: Response, session: string) {
+    res.setHeader('Set-Cookie', sessionCookie(session));
+}
+
+function sessionCookie(session: string, httpsOnly: boolean = false): string {
+    const expiresAt = new Date();
+    expiresAt.setTime(expiresAt.getTime() + sessionDuration);
+
+    let cookie = `${SESSION_COOKIE}=${session}; HttpOnly; SameSite=Strict; Path=/; Expires=${expiresAt.toUTCString()}`;
+    if (httpsOnly) {
+        cookie = cookie + `; Secure`;
+    }
+
+    return cookie;
+}
 
 app.post(SEARCH_AUTHORS_ENDPOINT, (req: Request, res: Response) => {
     console.log("Searching fo authors...", req.body);
@@ -113,19 +254,10 @@ app.post(`${QUOTES_ENDPOINT}/:id/${QUOTE_NOTES_ENDPOINT_PART}`, (req: Request, r
 
     const note = new QuoteNote(quoteId, req.body.note, req.body.author, Date.now());
 
-    //TODO: global error handler
-    try {
-        quoteNotesService.addNote(note);
-        returnHtml(res, Pages.quoteNotesPage(quoteNotesService.notesOfQuote(quoteId)),
-            hxResetFormTrigger(Pages.LABELS.quoteNoteForm, { "get-notes-summary": true }));
-    } catch (e) {
-        console.error("Error while adding quote!", e);
-        if (e instanceof AppError) {
-            returnError(res, e);
-        } else {
-            throw e;
-        }
-    }
+    quoteNotesService.addNote(note);
+    returnHtml(res, Pages.quoteNotesPage(quoteNotesService.notesOfQuote(quoteId)),
+        hxResetFormTrigger(Pages.LABELS.quoteNoteForm,
+            hxAdditionalTrigersOfKeys(Pages.TRIGGERS.getNotesSummary)));
 });
 
 app.get(`${QUOTES_ENDPOINT}/:id/${QUOTE_NOTES_SUMMARY_ENDPOINT_PART}`, (req: Request, res: Response) => {
@@ -134,20 +266,24 @@ app.get(`${QUOTES_ENDPOINT}/:id/${QUOTE_NOTES_SUMMARY_ENDPOINT_PART}`, (req: Req
 });
 
 app.post(QUOTE_NOTES_VALIDATE_NOTE_ENDPOINT, (req: Request, res: Response) => {
-    const input = req.body as QuoteNoteInput;
-    const noteError = quoteNotesService.validateQuoteNote(input.note);
-    const authorError = quoteNotesService.validateQuoteAuthor(input.author);
-
+    const { noteError, authorError } = validateQuoteNotesInput(req);
     returnHtml(res, Pages.inputErrorIf(noteError),
         hxFormValidatedTrigger(Pages.LABELS.quoteNoteForm,
             noteError == null && authorError == null));
 });
 
-app.post(QUOTE_NOTES_VALIDATE_AUTHOR_ENDPOINT, (req: Request, res: Response) => {
+function validateQuoteNotesInput(req: Request): {
+    noteError: ErrorCode | null,
+    authorError: ErrorCode | null
+} {
     const input = req.body as QuoteNoteInput;
     const noteError = quoteNotesService.validateQuoteNote(input.note);
     const authorError = quoteNotesService.validateQuoteAuthor(input.author);
+    return { noteError, authorError };
+}
 
+app.post(QUOTE_NOTES_VALIDATE_AUTHOR_ENDPOINT, (req: Request, res: Response) => {
+    const { noteError, authorError } = validateQuoteNotesInput(req);
     returnHtml(res, Pages.inputErrorIf(authorError),
         hxFormValidatedTrigger(Pages.LABELS.quoteNoteForm,
             noteError == null && authorError == null));
@@ -211,6 +347,11 @@ function hxResetFormTrigger(label: string, additionalTriggers: any): string {
     });
 }
 
+function hxAdditionalTrigersOfKeys(...keys: string[]): any {
+    const jsonBody = [...keys].map(k => `"${k}": true`).join(",\n");
+    return JSON.parse(`{ ${jsonBody} }`);
+}
+
 function shouldReturnFullPage(req: Request): boolean {
     return (req.headers[HTMX_REQUEST_HEADER] ? false : true) &&
         (req.headers[HTMX_RESTORE_HISTORY_REQUEST] ? false : true)
@@ -220,10 +361,36 @@ function returnNotFound(res: Response) {
     res.sendStatus(404);
 }
 
-function returnError(res: Response, error: AppError) {
-    res.status(400)
-    res.contentType("text/html");
-    res.send(Pages.errorPage(error));
+app.use((error: any, req: Request, res: Response, next: NextFunction) => {
+    console.error("Something went wrong...", error);
+    //TODO: refactor!
+    let status: number;
+    let errors: ErrorCode[]
+    if (error instanceof AppError) {
+        status = appErrorStatus(error);
+        errors = error.errors;
+    } else {
+        status = 500;
+        //TODO: maybe more details
+        errors = ["UNKOWN_ERROR"];
+    }
+    res.status(status);
+    returnHtml(res, Pages.errorPage(errors, shouldReturnFullPage(req)));
+});
+
+function appErrorStatus(error: AppError): number {
+    for (let e of error.errors) {
+        if (e == Errors.NOT_AUTHENTICATED) {
+            return 401;
+        }
+        if (e == Errors.INCORRECT_USER_PASSWORD) {
+            return 403;
+        }
+        if (e.includes("NOT_FOUND")) {
+            return 404;
+        }
+    }
+    return 400;
 }
 
 app.listen(SERVER_PORT, () => {

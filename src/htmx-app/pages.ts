@@ -19,6 +19,7 @@ export const FORM_LABEL = "data-form";
 export const SUBMIT_FORM_LABEL = "data-submit-form";
 
 export const LABELS = {
+    signInForm: "sign-in-form",
     quoteNoteForm: "quote-note-form"
 };
 
@@ -28,6 +29,23 @@ const DISABLED_CLASS = "disabled";
 export const TRIGGERS = {
     getNotesSummary: "get-notes-summary"
 };
+
+//TODO: proper signIn page!
+export function signInPage(signInEndpoint: string,
+    validateNameEndpoint: string,
+    validatePasswordEndpoint: string,
+    renderFullPage: boolean): string {
+    const page = `<form class="p-4 shadow-md relative"
+        hx-post="${signInEndpoint}"
+        hx-target="#${ROOT_ID}"
+        hx-replace-url="/">
+        ${inputWithHiddenError("name", "Your name...", validateNameEndpoint)}
+        ${inputWithHiddenError("password", "Your password...", validatePasswordEndpoint, "password")}
+        <input class="absolute bottom-0 right-0 p-4" type="submit" value="Sign In"
+        ${SUBMIT_FORM_LABEL}="${LABELS.signInForm}">
+    </form>`;
+    return renderFullPage ? wrappedInMainPage(page) : page;
+}
 
 export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: string): string {
     const authorsList = suggestedAuthors.map(a => `<li class="ml-4">${a}</li>`).join("\n");
@@ -81,6 +99,7 @@ function wrappedInMainPage(html: string): string {
       <script src="${INDEX_JS_SRC}"></script>
     </html>`;
 }
+
 
 export function authorsSearchResult(result: Author[], authorEndpoint: Function): string {
     const resultList = result.map(a =>
@@ -178,8 +197,9 @@ export function quoteNotesPage(quoteNotes: QuoteNote[]) {
         </div>`;
 }
 
-export function inputWithHiddenError(name: string, placeholder: string, validateEndpoint: string): string {
-    return `<input name="${name}" placeholder="${placeholder}"
+export function inputWithHiddenError(name: string, placeholder: string, validateEndpoint: string,
+    type: string = "text"): string {
+    return `<input name="${name}" placeholder="${placeholder}" type="${type}"
         hx-trigger="keyup changed delay:500ms"
         hx-target="next .error-message"
         hx-swap="outerHTML"
@@ -187,8 +207,8 @@ export function inputWithHiddenError(name: string, placeholder: string, validate
     ${inputErrorIf()}`
 }
 
-export function errorPage(error: AppError): string {
-    return error.errors.map(e => `<p>${translatedError(e)}</p>`).join('\n');
+export function errorsComponent(errors: ErrorCode[]): string {
+    return errors.map(e => `<p>${translatedError(e)}</p>`).join('\n');
 }
 
 function translatedError(error: ErrorCode): string {
@@ -223,4 +243,13 @@ function errorModal(): string {
             <div id="error-modal-content"></div>
         </div>
     </div>`;
+}
+
+//TODO: style it!
+export function errorPage(errors: ErrorCode[], renderFullPage: boolean): string {
+    const page = `<div>
+        <h1 class="m-1 text-xl">Something went wrong...</h1>
+        ${errorsComponent(errors)}
+    </div>`;
+    return renderFullPage ? wrappedInMainPage(page) : page;
 }
