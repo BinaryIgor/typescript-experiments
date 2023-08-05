@@ -16,6 +16,7 @@ export const AUTHORS_SEARCH_INPUT = "authors-search";
 const INDEX_JS_SRC = "/index.js";
 
 export const FORM_LABEL = "data-form";
+export const CONFIRMABLE_FORM_LABEL = "data-confirmable-form";
 export const SUBMIT_FORM_LABEL = "data-submit-form";
 
 export const LABELS = {
@@ -89,6 +90,7 @@ function wrappedInMainPage(html: string): string {
         <link rel="stylesheet" href="/style.css"/>
       </head>
       <body>
+        ${confirmableModal()}
         ${errorModal()}
         <div hx-history="false" id="${ROOT_ID}" hx-history-elt>
             ${html}
@@ -147,6 +149,8 @@ export function authorQuotePage(params: {
     const addNoteFormSubmitId = "add-note-form-submit";
     const notesListId = "notes-list";
 
+    const confirmQuoteNoteMessage = "Are you sure that you want to add this note?";
+
     const page = `<div class="shadow-md p-6">
         <p class="text-2xl">"${params.quote}"</p>
         <p class="text-xl font-bold text-right">${params.author}</p>
@@ -161,7 +165,8 @@ export function authorQuotePage(params: {
             <form id="${addNoteFormId}" class="p-4 shadow-md relative ${HIDDEN_CLASS}"
                 hx-post="${params.addQuoteNoteEndpoint}"
                 hx-target="#${notesListId}"
-                ${FORM_LABEL}="${LABELS.quoteNoteForm}">
+                ${FORM_LABEL}="${LABELS.quoteNoteForm}"
+                ${CONFIRMABLE_FORM_LABEL}="${confirmQuoteNoteMessage}">
                 ${inputWithHiddenError('note', 'Your note...', params.validateQuoteNoteEndpoint)}
                 <input id="${addNoteFormSubmitId}" class="absolute bottom-0 right-0 p-4" type="submit" value="Add"
                     ${SUBMIT_FORM_LABEL}="${LABELS.quoteNoteForm}">
@@ -232,10 +237,21 @@ function inlineJs(js: string, scoped: boolean = true): string {
 }
 
 function errorModal(): string {
-    return `<div class="modal hidden" id="error-modal">
+    return `<div class="modal ${HIDDEN_CLASS}" id="error-modal">
         <div class="modal-content">
             <span id="error-modal-close" class="close">&times;</span>
             <div id="error-modal-content"></div>
+        </div>
+    </div>`;
+}
+
+function confirmableModal(): string {
+    return `<div class="modal ${HIDDEN_CLASS}" id="confirmable-modal">
+        <div class="modal-content relative">
+            <span id="confirmable-modal-close" class="close">&times;</span>
+            <div class="p-4 mb-4" id="confirmable-modal-content"></div>
+            <span id="confirmable-modal-cancel" class="absolute bottom-0 left-0 p-4 cursor-pointer">Cancel</span>
+            <span id="confirmable-modal-ok" class="absolute bottom-0 right-0 p-4 cursor-pointer">Ok</span>
         </div>
     </div>`;
 }

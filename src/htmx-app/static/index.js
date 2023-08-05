@@ -1,15 +1,19 @@
 console.log("Loading index js...");
 
 const FORM_LABEL = "data-form";
+const CONFIRMABLE_FORM_LABEL = "data-confirmable-form";
 const SUBMIT_FORM_LABEL = "data-submit-form";
+const HIDDEN_CLASS = "hidden";
 const DISABLED_CLASS = "disabled";
 
 const HTMX_EVENTS = {
     configRequest: "htmx:configRequest",
-    afterRequest: "htmx:afterRequest"
+    afterRequest: "htmx:afterRequest",
+    confirm: "htmx:confirm"
 };
 
 initErrorModal();
+initConfirmableModal();
 initEventListeners();
 registerHtmxExtensions();
 
@@ -18,19 +22,75 @@ function initErrorModal() {
     const errorModalContent = document.getElementById("error-modal-content");
 
     document.getElementById("error-modal-close").onclick = () => {
-        errorModal.classList.toggle("hidden");
+        errorModal.classList.toggle(HIDDEN_CLASS);
     };
 
     document.addEventListener("htmx:responseError", e => {
         console.log("Response error!", e);
         errorModalContent.innerHTML = e.detail.xhr.response;
-        errorModal.classList.toggle("hidden");
+        errorModal.classList.toggle(HIDDEN_CLASS);
     });
 
     document.addEventListener("htmx:sendError", e => {
         console.log("Send error!", e);
         errorModalContent.innerHTML = "Server unavailable";
-        errorModal.classList.toggle("hidden");
+        errorModal.classList.toggle(HIDDEN_CLASS);
+    });
+}
+
+function initConfirmableModal() {
+    const confirmableModal = document.getElementById("confirmable-modal");
+    const confirmableModalContent = document.getElementById("confirmable-modal-content");
+    let confirmableEvent = null;
+    
+    function isModalShown() {
+        return !confirmableModal.classList.contains(HIDDEN_CLASS);
+    }
+
+    function hideModal() {
+        confirmableModal.classList.add(HIDDEN_CLASS);
+    }
+
+    function showModal() {
+        confirmableModal.classList.remove(HIDDEN_CLASS);
+    }
+
+    document.getElementById("confirmable-modal-cancel").onclick = () => {
+        console.log("Canceling modal...");
+        e.stopPropagation();
+        hideModal();
+    };
+    document.getElementById("confirmable-modal-ok").onclick = e => {
+        e.stopPropagation();
+        console.log("Confirming modal....");
+        hideModal();
+        if (confirmableEvent) {
+            confirmableEvent.detail.issueRequest();
+            confirmableEvent = null;
+        }
+    };
+
+    document.getElementById("confirmable-modal-close").onclick = () => {
+        confirmableModal.classList.toggle(HIDDEN_CLASS);
+        confirmableModal.classList.contains(HIDDEN_CLASS);
+    };
+
+    document.addEventListener(HTMX_EVENTS.confirm, e => {
+        const sourceElement = e.detail.elt;
+        const confirmableMessage = sourceElement.getAttribute(CONFIRMABLE_FORM_LABEL);
+        console.log("Can you confirm it first?", confirmableMessage);
+        if (confirmableMessage) {
+            e.preventDefault();
+            confirmableEvent = e;
+            showModal();
+            confirmableModalContent.innerHTML = confirmableMessage;
+        }
+    });
+
+    document.addEventListener("click", () => {
+        if (isModalShown()) {
+            hideModal();
+        }
     });
 }
 
