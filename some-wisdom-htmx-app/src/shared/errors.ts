@@ -1,4 +1,5 @@
 export type ErrorCode = string;
+export type OptionalErrorCode = ErrorCode | null;
 
 export const Errors = {
     INVALID_QUOTE_NOTE_CONTENT: "INVALID_QUOTE_NOTE_CONTENT",

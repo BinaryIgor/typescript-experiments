@@ -1,4 +1,4 @@
-import { AppError, Errors } from "./errors";
+import { AppError, Errors } from "../shared/errors";
 import fs from "fs";
 import path from "path";
 

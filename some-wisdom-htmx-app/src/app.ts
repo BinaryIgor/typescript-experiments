@@ -5,25 +5,17 @@ import express, { NextFunction, Request, Response } from "express";
 import { Author, Authors } from "./authors";
 import { Quotes } from "./quotes";
 import * as FilesDb from "./files-db";
-import * as Pages from "./pages";
+import * as Views from "./shared/views";
 import { QuoteNotesService, InMemoryQuoteNotesRepository, QuoteNoteInput, NewQuoteNote } from "./quote-notes";
-import { AppError, ErrorCode, Errors } from "./errors";
-import { Base64PasswordHasher, InMemoryUserRepository, UserService, UserSignInInput } from "./users";
-import { AuthSessions, AuthUser } from "./auth";
+import { AppError, ErrorCode, Errors } from "./shared/errors";
+import { UserService, UserSignInInput } from "./user/domain";
+import { AuthSessions, AuthUser } from "./auth/auth";
 import * as ViewMapper from "./view-mapper";
+import * as Web from "./shared/web";
+import { currentUser, setCurrentUser, SessionCookies, currentUserOrThrow, currentUserName } from "./auth/web";
+import * as UserModule from "./user/module";
 
 const SERVER_PORT = 8080;
-
-const HTMX_REQUEST_HEADER = "hx-request";
-const HTMX_RESTORE_HISTORY_REQUEST = "hx-history-restore-request";
-
-const SESSION_COOKIE = "session-id";
-
-const SIGN_IN_ENDPOINT = "/sign-in";
-const SIGN_IN_EXECUTE_ENDPOINT = `${SIGN_IN_ENDPOINT}/execute`;
-const SIGN_IN_VALIDATE_NAME_ENDPOINT = `${SIGN_IN_ENDPOINT}/validate-name`;
-const SIGN_IN_VALIDATE_PASSWORD_ENDPOINT = `${SIGN_IN_ENDPOINT}/validate-password`;
-const SIGN_OUT_ENDPOINT = "/sign-out";
 
 const SEARCH_AUTHORS_ENDPOINT = "/search-authors";
 const AUTHORS_ENDPOINT = "/authors";
@@ -32,13 +24,6 @@ const QUOTE_NOTES_ENDPOINT_PART = "notes";
 const QUOTE_NOTES_VALIDATE_NOTE_ENDPOINT = `${QUOTES_ENDPOINT}/validate-note`;
 const QUOTE_NOTES_VALIDATE_AUTHOR_ENDPOINT = `${QUOTES_ENDPOINT}/validate-author`;
 const QUOTE_NOTES_SUMMARY_ENDPOINT_PART = "notes-summary";
-
-const HX_TRIGGER_HEADER = "HX-Trigger";
-
-const userRepository = new InMemoryUserRepository();
-
-const passwordHasher = new Base64PasswordHasher();
-const userService = new UserService(userRepository, passwordHasher);
 
 //5 hours;
 const sessionDuration = 5 * 60 * 60 * 1000;
@@ -49,6 +34,7 @@ if (!fs.existsSync(sessionsDir)) {
 }
 
 const authSessions = new AuthSessions(sessionsDir, sessionDuration, 60 * 1000);
+const sessionCookies = new SessionCookies(sessionDuration, "session-id", false);
 
 const authors = new Authors();
 const quotes = new Quotes();
@@ -59,17 +45,21 @@ const quoteNotesService = new QuoteNotesService(quoteNotesRepository);
 const dbPath = path.join(__dirname, "static", "db");
 const quoteNotesDbPath = path.join(dbPath, "__quote-notes.json");
 
+//TODO: fix deps tree!
+
 staticFileContentOfPath(path.join(dbPath, "authors-with-quotes.json"))
     .then(db => FilesDb.importAuthorsWithQuotes(db, authors, quotes))
     .catch(e => console.log("Failed to load authors db!", e));
 
 staticFileContentOfPath(path.join(dbPath, "users.json"))
-    .then(db => FilesDb.importUsers(db, userRepository))
+    .then(db => FilesDb.importUsers(db, userModule.client))
     .catch(e => console.log("Failed to load users db!", e));
 
 staticFileContentOfPath(quoteNotesDbPath)
     .then(db => FilesDb.importQuoteNotes(db, quoteNotesRepository))
     .catch(e => console.log("Failed to load (optional!) quote notes db!", e));
+
+const userModule = UserModule.build(authSessions, sessionCookies, returnHomePage);
 
 const STATIC_ASSETS_PATH = path.join(__dirname, "static");
 
@@ -90,12 +80,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Weak etags are added by default
 app.set('etag', false);
 
-const asyncHandler = (fn: Function) => (req: Request, res: Response, next: NextFunction) => {
-    return Promise.resolve(fn(req, res, next)).catch(next);
-}
-
-app.use(asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    const session = cookieValue(req, SESSION_COOKIE);
+app.use(Web.asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const session = sessionCookies.sessionFromCookie(req);
     let user: AuthUser | null;
 
     if (session) {
@@ -113,149 +99,32 @@ app.use(asyncHandler(async (req: Request, res: Response, next: NextFunction) => 
         console.log("Request is public or we have a user!", user);
         if (user && session && await authSessions.shouldRefresh(session)) {
             await authSessions.refresh(session);
-            setSessionCookie(res, session);
+            sessionCookies.setCookie(res, session);
         }
         next();
     } else {
-        res.redirect(SIGN_IN_ENDPOINT);
+        res.redirect(userModule.signInEndpoint);
     }
 }));
 
-function setCurrentUser(req: any, user: AuthUser) {
-    req.user = user;
-}
-
-function currentUser(req: any): AuthUser | null {
-    return req.user as AuthUser;
-}
-
-function currentUserOrThrow(req: any): AuthUser {
-    const user = currentUser(req);
-    if (!user) {
-        throw AppError.ofSingleError(Errors.NOT_AUTHENTICATED);
-    }
-    return user;
-}
-
-function currentUserName(req: any): string | null {
-    return currentUser(req)?.name ?? null;
-}
-
-function cookieValue(req: Request, cookie: string): string | null {
-    const cookiesHeader = req.headers.cookie;
-    if (!cookiesHeader) {
-        return null;
-    }
-    const cookies = cookiesHeader.split(';');
-    for (let c of cookies) {
-        const kv = c.split("=", 2);
-        if (kv.length != 2) {
-            continue;
-        }
-        const k = kv[0].trim();
-        const v = kv[1].trim();
-        if (k == cookie) {
-            return v;
-        }
-    }
-
-    return null;
-}
-
 function isPublicRequest(req: Request): boolean {
-    return req.path.startsWith(SIGN_IN_ENDPOINT) ||
+    return req.path.startsWith("/user") ||
         req.path.includes(".css") || req.path.includes(".js") || req.path.includes(".ico");
 }
 
-app.get(SIGN_IN_ENDPOINT, (req: Request, res: Response) => {
-    returnSignInPage(req, res);
-});
-
-function returnSignInPage(req: Request, res: Response) {
-    returnHtml(res,
-        Pages.signInPage(SIGN_IN_EXECUTE_ENDPOINT, SIGN_IN_VALIDATE_NAME_ENDPOINT, SIGN_IN_VALIDATE_PASSWORD_ENDPOINT,
-            shouldReturnFullPage(req)));
-}
-
-app.post(SIGN_IN_VALIDATE_NAME_ENDPOINT, (req: Request, res: Response) => {
-    const { nameError, passwordError } = validateSignInInput(req);
-    returnHtml(res, Pages.inputErrorIf(nameError),
-        hxFormValidatedTrigger(Pages.LABELS.signInForm,
-            nameError == null && passwordError == null));
-});
-
-function validateSignInInput(req: Request) {
-    const input = req.body as UserSignInInput;
-    const nameError = userService.validateUserName(input.name);
-    const passwordError = userService.validateUserPassword(input.password);
-    return { nameError, passwordError };
-}
-
-app.post(SIGN_IN_VALIDATE_PASSWORD_ENDPOINT, (req: Request, res: Response) => {
-    const { nameError, passwordError } = validateSignInInput(req);
-    returnHtml(res, Pages.inputErrorIf(passwordError),
-        hxFormValidatedTrigger(Pages.LABELS.signInForm,
-            nameError == null && passwordError == null));
-});
-
-app.post(SIGN_IN_EXECUTE_ENDPOINT, asyncHandler(async (req: Request, res: Response) => {
-    const input = req.body as UserSignInInput;
-    const user = userService.signIn(input.name, input.password);
-
-    const session = await authSessions.create(user);
-
-    setSessionCookie(res, session);
-
-    setTriggerHeader(res, Pages.TRIGGERS.showNavigation);
-
-    returnHomePage(req, res);
-}));
-
-app.post(SIGN_OUT_ENDPOINT, asyncHandler(async (req: Request, res: Response) => {
-    const session = cookieValue(req, SESSION_COOKIE);
-    if (session) {
-        await authSessions.delete(session);
-        setSessionCookie(res, session, true);
-    }
-    setTriggerHeader(res, Pages.TRIGGERS.hideNavigation);
-    returnSignInPage(req, res);
-}));
-
-function setSessionCookie(res: Response, session: string, expired: boolean = false) {
-    res.setHeader('Set-Cookie', sessionCookie(session, expired));
-}
-
-function sessionCookie(session: string, expired: boolean = false, httpsOnly: boolean = false): string {
-    const expiresAt = new Date();
-    if (expired) {
-        expiresAt.setTime(0);
-    } else {
-        expiresAt.setTime(expiresAt.getTime() + sessionDuration);
-    }
-
-    let cookie = `${SESSION_COOKIE}=${session}; HttpOnly; SameSite=Strict; Path=/; Expires=${expiresAt.toUTCString()}`;
-    if (httpsOnly) {
-        cookie = cookie + `; Secure`;
-    }
-
-    return cookie;
-}
-
-app.get("/current-user", (req: Request, res: Response) => {
-    returnHtml(res, Pages.navigationComponent(currentUserName(req)));
-});
+app.use(userModule.router);
 
 app.post(SEARCH_AUTHORS_ENDPOINT, (req: Request, res: Response) => {
     console.log("Searching fo authors...", req.body);
 
-    const query = req.body[Pages.AUTHORS_SEARCH_INPUT];
+    const query = req.body[Views.AUTHORS_SEARCH_INPUT];
 
     const foundAuthors = authors.search(query);
     //TODO: search quotes!
 
     //Slow it down, for demonstration purposes
-    setTimeout(() => returnHtml(res,
-        Pages.authorsSearchResult(foundAuthors, (a: Author) => `${AUTHORS_ENDPOINT}/${a.name}`)),
+    setTimeout(() => Web.returnHtml(res,
+        Views.authorsSearchResult(foundAuthors, (a: Author) => `${AUTHORS_ENDPOINT}/${a.name}`)),
         1000);
 });
 
@@ -266,9 +135,9 @@ app.get(`${AUTHORS_ENDPOINT}/:name`, (req: Request, res: Response) => {
     const author = authors.ofName(name);
     const authorQuotes = quotes.ofAuthor(name);
     if (author) {
-        returnHtml(res, Pages.authorPage(author, authorQuotes,
+        Web.returnHtml(res, Views.authorPage(author, authorQuotes,
             (qId: number) => `${QUOTES_ENDPOINT}/${qId}`,
-            shouldReturnFullPage(req),
+            Web.shouldReturnFullPage(req),
             currentUserName(req)));
     } else {
         returnNotFound(res);
@@ -281,7 +150,7 @@ app.get(`${QUOTES_ENDPOINT}/:id`, (req: Request, res: Response) => {
     const quote = quotes.ofId(quoteId);
     if (quote) {
         const { notes, deleteableNoteIds } = quoteNoteViews(currentUserOrThrow(req).id, quoteId);
-        returnHtml(res, Pages.authorQuotePage({
+        Web.returnHtml(res, Views.authorQuotePage({
             author: quote.author,
             quote: quote.content,
             notes: notes,
@@ -291,7 +160,7 @@ app.get(`${QUOTES_ENDPOINT}/:id`, (req: Request, res: Response) => {
             addQuoteNoteEndpoint: addQuoteNoteEndpoint(quoteId),
             validateQuoteNoteEndpoint: QUOTE_NOTES_VALIDATE_NOTE_ENDPOINT,
             validateQuoteAuthorEndpoint: QUOTE_NOTES_VALIDATE_AUTHOR_ENDPOINT,
-            renderFullPage: shouldReturnFullPage(req),
+            renderFullPage: Web.shouldReturnFullPage(req),
             currentUser: currentUserName(req)
         }));
     } else {
@@ -299,10 +168,10 @@ app.get(`${QUOTES_ENDPOINT}/:id`, (req: Request, res: Response) => {
     }
 });
 
-function quoteNoteViews(currentUserId: number, quoteId: number): { notes: Pages.QuoteNoteView[], deleteableNoteIds: number[] } {
+function quoteNoteViews(currentUserId: number, quoteId: number): { notes: Views.QuoteNoteView[], deleteableNoteIds: number[] } {
     const notes = quoteNotesService.notesOfQuoteSortedByTimestamp(quoteId);
     const authorIds = notes.map(n => n.noteAuthorId);
-    const authors = userService.usersOfIds(authorIds);
+    const authors = userModule.client.usersOfIds(authorIds);
 
     const deleteableNoteIds = notes.filter(n => n.noteAuthorId == currentUserId).map(n => n.noteId);
 
@@ -333,21 +202,21 @@ app.post(`${QUOTES_ENDPOINT}/:id/${QUOTE_NOTES_ENDPOINT_PART}`, (req: Request, r
 
     const { notes: newNotes, deleteableNoteIds } = quoteNoteViews(author.id, quoteId);
 
-    returnHtml(res, Pages.quoteNotesPage(newNotes, deleteableNoteIds, deleteQuoteNoteEndpoint),
-        hxResetFormTrigger(Pages.LABELS.quoteNoteForm,
-            hxAdditionalTrigersOfKeys(Pages.TRIGGERS.getNotesSummary)));
+    Web.returnHtml(res, Views.quoteNotesPage(newNotes, deleteableNoteIds, deleteQuoteNoteEndpoint),
+        Views.resetFormTrigger(Views.LABELS.quoteNoteForm,
+            Views.additionalTrigersOfKeys(Views.TRIGGERS.getNotesSummary)));
 });
 
 app.get(`${QUOTES_ENDPOINT}/:id/${QUOTE_NOTES_SUMMARY_ENDPOINT_PART}`, (req: Request, res: Response) => {
     const quoteId = req.params.id as any as number;
-    returnHtml(res, Pages.quoteNotesSummaryComponent(quoteNotesService.notesOfQuoteCount(quoteId)));
+    Web.returnHtml(res, Views.quoteNotesSummaryComponent(quoteNotesService.notesOfQuoteCount(quoteId)));
 });
 
 app.post(QUOTE_NOTES_VALIDATE_NOTE_ENDPOINT, (req: Request, res: Response) => {
     const input = req.body as QuoteNoteInput;
     const noteError = quoteNotesService.validateQuoteNote(input.note);
-    returnHtml(res, Pages.inputErrorIf(noteError),
-        hxFormValidatedTrigger(Pages.LABELS.quoteNoteForm,
+    Web.returnHtml(res, Views.inputErrorIf(noteError),
+        Views.formValidatedTrigger(Views.LABELS.quoteNoteForm,
             noteError == null));
 });
 
@@ -358,7 +227,7 @@ app.delete(`${QUOTES_ENDPOINT}/${QUOTE_NOTES_ENDPOINT_PART}/:id`, (req: Request,
 
     quoteNotesService.deleteNote(quoteNoteId, author.id);
 
-    returnHtml(res, "", Pages.TRIGGERS.getNotesSummary);
+    Web.returnHtml(res, "", Views.TRIGGERS.getNotesSummary);
 });
 
 app.get("/", (req: Request, res: Response) => returnHomePage(req, res));
@@ -367,10 +236,10 @@ app.get("/index.html", (req: Request, res: Response) => returnHomePage(req, res)
 app.get("*", async (req: Request, res: Response) => {
     console.log("REq body...", req.body);
     if (req.url.includes("style")) {
-        returnCss(res, await staticFileContentOfPath(STYLES_PATH));
+        Web.returnCss(res, await staticFileContentOfPath(STYLES_PATH));
     } else if (req.url.includes(".js")) {
         const fileName = req.url.substring(req.url.lastIndexOf("/"));
-        returnJs(res, await staticFileContentOfPath(path.join(STATIC_ASSETS_PATH, fileName)));
+        Web.returnJs(res, await staticFileContentOfPath(path.join(STATIC_ASSETS_PATH, fileName)));
     } else {
         returnNotFound(res);
     }
@@ -384,57 +253,9 @@ function staticFileContentOfPath(path: string): Promise<string> {
     return fs.promises.readFile(path, 'utf-8');
 }
 
-async function returnCss(res: Response, css: string) {
-    res.contentType("text/css");
-    res.send(css);
-}
-
-async function returnJs(res: Response, js: string) {
-    res.contentType("application/javascript");
-    res.send(js);
-}
-
 function returnHomePage(req: Request, res: Response) {
-    returnHtml(res, Pages.homePage(authors.random(3).map(a => a.name), SEARCH_AUTHORS_ENDPOINT,
-        shouldReturnFullPage(req), currentUserName(req)));
-}
-
-function returnHtml(res: Response, html: string, hxTrigger: string | null = null) {
-    res.contentType("text/html");
-    if (hxTrigger) {
-        setTriggerHeader(res, hxTrigger);
-    }
-    res.send(html);
-}
-
-function setTriggerHeader(res: Response, trigger: string) {
-    res.setHeader(HX_TRIGGER_HEADER, trigger);
-}
-
-function hxFormValidatedTrigger(formLabel: string, valid: boolean) {
-    return JSON.stringify({
-        "form-validated": {
-            "label": formLabel,
-            "valid": valid
-        }
-    });
-}
-
-function hxResetFormTrigger(label: string, additionalTriggers: any): string {
-    return JSON.stringify({
-        "reset-form": label,
-        ...additionalTriggers
-    });
-}
-
-function hxAdditionalTrigersOfKeys(...keys: string[]): any {
-    const jsonBody = [...keys].map(k => `"${k}": true`).join(",\n");
-    return JSON.parse(`{ ${jsonBody} }`);
-}
-
-function shouldReturnFullPage(req: Request): boolean {
-    return (req.headers[HTMX_REQUEST_HEADER] ? false : true) &&
-        (req.headers[HTMX_RESTORE_HISTORY_REQUEST] ? false : true)
+    Web.returnHtml(res, Views.homePage(authors.random(3).map(a => a.name), SEARCH_AUTHORS_ENDPOINT,
+        Web.shouldReturnFullPage(req), currentUserName(req)));
 }
 
 function returnNotFound(res: Response) {
@@ -455,7 +276,7 @@ app.use((error: any, req: Request, res: Response, next: NextFunction) => {
         errors = ["UNKOWN_ERROR"];
     }
     res.status(status);
-    returnHtml(res, Pages.errorPage(errors, shouldReturnFullPage(req), currentUserName(req)));
+    Web.returnHtml(res, Views.errorPage(errors, Web.shouldReturnFullPage(req), currentUserName(req)));
 });
 
 function appErrorStatus(error: AppError): number {

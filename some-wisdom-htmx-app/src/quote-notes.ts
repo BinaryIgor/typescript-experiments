@@ -1,5 +1,5 @@
-import { Errors, AppError, ErrorCode } from "./errors";
-import * as Validator from "./validator";
+import { Errors, AppError, ErrorCode } from "./shared/errors";
+import * as Validator from "./shared/validator";
 
 const MIN_NOTE_LENGTH = 3;
 const MAX_NOTE_LENGTH = 1000;

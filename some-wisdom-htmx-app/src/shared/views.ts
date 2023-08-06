@@ -1,10 +1,10 @@
-import { Author } from "./authors";
+import { Author } from "../authors";
 import { AppError, ErrorCode } from "./errors";
-import { QuoteNote } from "./quote-notes";
-import { Quote } from "./quotes";
+import { QuoteNote } from "../quote-notes";
+import { Quote } from "../quotes";
 
 const HTMX_SRC = "https://unpkg.com/htmx.org@1.9.3";
-const ROOT_ID = "app";
+export const ROOT_ID = "app";
 
 const ERRORS_TRANSLATIONS = {
     INVALID_QUOTE_NOTE_CONTENT: "Note can't be empty and needs to have 3 - 1000 characters",
@@ -12,7 +12,7 @@ const ERRORS_TRANSLATIONS = {
 } as any;
 
 export const AUTHORS_SEARCH_INPUT = "authors-search";
-const STYLE_SRC = "/style.js";
+const STYLE_SRC = "/style.css";
 const INDEX_JS_SRC = "/index.js";
 
 export const FORM_LABEL = "data-form";
@@ -20,35 +20,17 @@ export const CONFIRMABLE_ELEMENT_LABEL = "data-confirmable-element";
 export const SUBMIT_FORM_LABEL = "data-submit-form";
 
 export const LABELS = {
-    signInForm: "sign-in-form",
     quoteNoteForm: "quote-note-form"
 };
 
-const HIDDEN_CLASS = "hidden";
-const DISABLED_CLASS = "disabled";
+export const HIDDEN_CLASS = "hidden";
+export const DISABLED_CLASS = "disabled";
 
 export const TRIGGERS = {
     getNotesSummary: "get-notes-summary",
     showNavigation: "show-navigation",
     hideNavigation: "hide-navigation"
 };
-
-//TODO: proper signIn page!
-export function signInPage(signInEndpoint: string,
-    validateNameEndpoint: string,
-    validatePasswordEndpoint: string,
-    renderFullPage: boolean): string {
-    const page = `<form class="p-4 shadow-md relative"
-        hx-post="${signInEndpoint}"
-        hx-target="#${ROOT_ID}"
-        hx-replace-url="/">
-        ${inputWithHiddenError("name", "Your name...", validateNameEndpoint)}
-        ${inputWithHiddenError("password", "Your password...", validatePasswordEndpoint, "password")}
-        <input class="absolute bottom-0 right-0 p-4 ${DISABLED_CLASS}" type="submit" value="Sign In"
-        ${SUBMIT_FORM_LABEL}="${LABELS.signInForm}" disabled>
-    </form>`;
-    return renderFullPage ? wrappedInMainPage(page, null) : page;
-}
 
 export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: string,
     renderFullPage: boolean,
@@ -84,7 +66,7 @@ export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: stri
     return renderFullPage ? wrappedInMainPage(page, currentUser) : page;
 }
 
-function wrappedInMainPage(html: string, currentUser: string | null): string {
+export function wrappedInMainPage(html: string, currentUser: string | null): string {
     return `<!DOCTYPE html>
     <html lang="en">
       <head>
@@ -92,7 +74,7 @@ function wrappedInMainPage(html: string, currentUser: string | null): string {
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
         <title>Some wisdom</title>
-        <link rel="stylesheet" href="/style.css"/>
+        <link rel="stylesheet" href="${STYLE_SRC}"/>
       </head>
       <body>
         ${navigationComponent(currentUser)}
@@ -286,18 +268,18 @@ function errorModal(): string {
     </div>`;
 }
 
-//TODO: restructure the code!
+//TODO: restructure the code, move endpoints deps!
 export function navigationComponent(currentUser: string | null): string {
     const hiddenClass = currentUser ? "" : ` ${HIDDEN_CLASS}`;
     return `<div id="app-navigation" class="z-50 sticky flex justify-between top-0 w-full p-4 border-b-2 border-black bg-white${hiddenClass}"
-        hx-get="/current-user"
+        hx-get="/user"
         hx-trigger="${TRIGGERS.showNavigation} from:body"
         hx-swap="outerHTML">
         <div>Some naive navigation for a reader: ${currentUser}</div>
         <div class="cursor-pointer" 
-            hx-post="/sign-out"
+            hx-post="/user/sign-out"
             hx-trigger="click"
-            hx-replace-url="/sign-in"
+            hx-replace-url="/user/sign-in"
             hx-swap="innerHTML"
             hx-target="#${ROOT_ID}">Say Cya!</div>
     </div>`;
@@ -322,6 +304,28 @@ export function errorPage(errors: ErrorCode[], renderFullPage: boolean, currentU
     </div>`;
     return renderFullPage ? wrappedInMainPage(page, currentUser) : page;
 }
+
+export function formValidatedTrigger(formLabel: string, valid: boolean) {
+    return JSON.stringify({
+        "form-validated": {
+            "label": formLabel,
+            "valid": valid
+        }
+    });
+}
+
+export function resetFormTrigger(label: string, additionalTriggers: any): string {
+    return JSON.stringify({
+        "reset-form": label,
+        ...additionalTriggers
+    });
+}
+
+export function additionalTrigersOfKeys(...keys: string[]): any {
+    const jsonBody = [...keys].map(k => `"${k}": true`).join(",\n");
+    return JSON.parse(`{ ${jsonBody} }`);
+}
+
 
 export class QuoteNoteView {
     constructor(

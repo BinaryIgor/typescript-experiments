@@ -1,12 +1,13 @@
-import { AuthUser } from "./auth";
-import { AppError, ErrorCode, Errors } from "./errors";
-import * as Validator from "./validator";
+import { AuthUser } from "../auth/auth";
+import { AppError, ErrorCode, Errors } from "../shared/errors";
+import * as Validator from "../shared/validator";
 
 const MIN_USER_NAME_LENGTH = 2;
 const MAX_USER_NAME_LENGTH = 30;
 const MIN_USER_PASSWORD_LENGTH = 8;
 const MAX_USER_PASSWORD_LENGTH = 50;
 
+//TODO: move it!
 export class UserSignInInput {
     constructor(readonly name: string, readonly password: string) { }
 }
@@ -69,46 +70,6 @@ export interface UserRepository {
     create(user: User): void;
 }
 
-export class InMemoryUserRepository implements UserRepository {
-
-    private readonly db = new Map<number, User>();
-
-    ofId(id: number): User | null {
-        return this.db.get(id) ?? null;
-    }
-
-    ofIds(ids: number[]): Map<number, User> {
-        const found = new Map<number, User>();
-        ids.forEach(id => {
-            const user = this.ofId(id);
-            if (user) {
-                found.set(id, user);
-            }
-        });
-        return found;
-    }
-
-    ofName(name: string): User | null {
-        for (let u of this.db.values()) {
-            if (u.name == name) {
-                return u;
-            }
-        }
-        return null;
-    }
-
-    create(user: User): void {
-        this.db.set(user.id, user);
-    }    
-}
-
 export interface PasswordHasher {
     verify(rawPassword: string, hashedPassword: string): boolean
 }
-
-export class Base64PasswordHasher implements PasswordHasher {
-    verify(rawPassword: string, hashedPassword: string): boolean {
-        return Buffer.from(rawPassword, 'utf8').toString('base64') == hashedPassword;
-    }
-}
-

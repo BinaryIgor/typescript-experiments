@@ -1,8 +1,9 @@
 import { Author, Authors } from "./authors";
 import { NewQuoteNote, QuoteNote, QuoteNotesRepository } from "./quote-notes";
 import { Quote, Quotes } from "./quotes";
-import { User, UserRepository } from "./users";
+import { User, UserRepository } from "./user/domain";
 import fs from "fs";
+import { UserClient } from "./user/module";
 
 class AuthorToImport {
     constructor(readonly name: string,
@@ -29,13 +30,13 @@ export function importAuthorsWithQuotes(dbJson: string, authors: Authors, quotes
     }
 }
 
-export function importUsers(dbJson: string, userRepository: UserRepository) {
+export function importUsers(dbJson: string, client: UserClient) {
     const usersFromDb = JSON.parse(dbJson);
 
     console.log(`Db loaded, we have ${usersFromDb.length} users!`);
 
     for (let u of usersFromDb) {
-        userRepository.create(u as User);
+        client.create(u as User);
     }
 }
 

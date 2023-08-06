@@ -1,6 +1,6 @@
-import { QuoteNoteView } from "./pages";
+import { QuoteNoteView } from "./shared/views";
 import { QuoteNote } from "./quote-notes";
-import { User } from "./users";
+import { User } from "./user/domain";
 
 export function toQuoteNoteViews(quoteNotes: QuoteNote[], authors: Map<number, User>): QuoteNoteView[] {
     return quoteNotes.map(q => {
