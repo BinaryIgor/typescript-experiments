@@ -10,7 +10,11 @@ const DISABLED_CLASS = "disabled";
 const HTMX_EVENTS = {
     configRequest: "htmx:configRequest",
     afterRequest: "htmx:afterRequest",
-    confirm: "htmx:confirm",
+    confirm: "htmx:confirm"
+};
+
+const TRIGGERS = {
+    hideNavigation: "hide-navigation"
 };
 
 initErrorModal();
@@ -139,6 +143,11 @@ function initEventListeners() {
     document.addEventListener(HTMX_EVENTS.configRequest, e => {
         console.log("Let's configure the request...", e);
         e.detail.headers['Authentication'] = crypto.randomUUID();
+    });
+
+    document.addEventListener(TRIGGERS.hideNavigation, e => {
+        console.log("hiding navigation...", e);
+        document.getElementById(navigationId).classList.add(HIDDEN_CLASS);
     });
 }
 

@@ -86,6 +86,10 @@ export class AuthSessions {
     private hasSessionExpired(session: SessionData, now: number) {
         return now > (session.refreshedAt + this.sessionDuration);
     }
+
+    async delete(session: string): Promise<void> {
+        return fs.promises.unlink(this.sessionPath(session));
+    }
 }
 
 class SessionData {

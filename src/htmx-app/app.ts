@@ -23,6 +23,7 @@ const SIGN_IN_ENDPOINT = "/sign-in";
 const SIGN_IN_EXECUTE_ENDPOINT = `${SIGN_IN_ENDPOINT}/execute`;
 const SIGN_IN_VALIDATE_NAME_ENDPOINT = `${SIGN_IN_ENDPOINT}/validate-name`;
 const SIGN_IN_VALIDATE_PASSWORD_ENDPOINT = `${SIGN_IN_ENDPOINT}/validate-password`;
+const SIGN_OUT_ENDPOINT = "/sign-out";
 
 const SEARCH_AUTHORS_ENDPOINT = "/search-authors";
 const AUTHORS_ENDPOINT = "/authors";
@@ -169,10 +170,14 @@ function isPublicRequest(req: Request): boolean {
 }
 
 app.get(SIGN_IN_ENDPOINT, (req: Request, res: Response) => {
+    returnSignInPage(req, res);
+});
+
+function returnSignInPage(req: Request, res: Response) {
     returnHtml(res,
         Pages.signInPage(SIGN_IN_EXECUTE_ENDPOINT, SIGN_IN_VALIDATE_NAME_ENDPOINT, SIGN_IN_VALIDATE_PASSWORD_ENDPOINT,
             shouldReturnFullPage(req)));
-});
+}
 
 app.post(SIGN_IN_VALIDATE_NAME_ENDPOINT, (req: Request, res: Response) => {
     const { nameError, passwordError } = validateSignInInput(req);
@@ -208,13 +213,27 @@ app.post(SIGN_IN_EXECUTE_ENDPOINT, asyncHandler(async (req: Request, res: Respon
     returnHomePage(req, res);
 }));
 
-function setSessionCookie(res: Response, session: string) {
-    res.setHeader('Set-Cookie', sessionCookie(session));
+app.post(SIGN_OUT_ENDPOINT, asyncHandler(async (req: Request, res: Response) => {
+    const session = cookieValue(req, SESSION_COOKIE);
+    if (session) {
+        await authSessions.delete(session);
+        setSessionCookie(res, session, true);
+    }
+    setTriggerHeader(res, Pages.TRIGGERS.hideNavigation);
+    returnSignInPage(req, res);
+}));
+
+function setSessionCookie(res: Response, session: string, expired: boolean = false) {
+    res.setHeader('Set-Cookie', sessionCookie(session, expired));
 }
 
-function sessionCookie(session: string, httpsOnly: boolean = false): string {
+function sessionCookie(session: string, expired: boolean = false, httpsOnly: boolean = false): string {
     const expiresAt = new Date();
-    expiresAt.setTime(expiresAt.getTime() + sessionDuration);
+    if (expired) {
+        expiresAt.setTime(0);
+    } else {
+        expiresAt.setTime(expiresAt.getTime() + sessionDuration);
+    }
 
     let cookie = `${SESSION_COOKIE}=${session}; HttpOnly; SameSite=Strict; Path=/; Expires=${expiresAt.toUTCString()}`;
     if (httpsOnly) {

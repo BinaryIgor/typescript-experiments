@@ -28,7 +28,8 @@ const DISABLED_CLASS = "disabled";
 
 export const TRIGGERS = {
     getNotesSummary: "get-notes-summary",
-    showNavigation: "show-navigation"
+    showNavigation: "show-navigation",
+    hideNavigation: "hide-navigation"
 };
 
 //TODO: proper signIn page!
@@ -204,7 +205,7 @@ export function quoteNotesPage(quoteNotes: QuoteNoteView[]) {
     return `<div id="notes-list">
             ${quoteNotes.map(qn => `<div class="shadow-md p-4">
                 <p class="text-xl">"${qn.note}"</p>
-                <p class="text-right">Added by ${qn.noteAuthor}, at ${qn.timestamp}</p>
+                <p class="text-right">Added by ${qn.noteAuthor}, on ${qn.timestamp}</p>
             </div>`).join('\n')}
         </div>`;
 }
@@ -253,13 +254,19 @@ function errorModal(): string {
     </div>`;
 }
 
+//TODO: restructure the code!
 export function navigationComponent(currentUser: string | null): string {
     const hiddenClass = currentUser ? "" : ` ${HIDDEN_CLASS}`;
-    return `<div id="app-navigation" class="sticky top-0 w-full p-4 border-b-2 border-black bg-white${hiddenClass}"
+    return `<div id="app-navigation" class="sticky flex justify-between top-0 w-full p-4 border-b-2 border-black bg-white${hiddenClass}"
         hx-get="/current-user"
         hx-trigger="${TRIGGERS.showNavigation} from:body"
         hx-swap="outerHTML">
-        Some naive navigation for a reader: ${currentUser}
+        <div>Some naive navigation for a reader: ${currentUser}</div>
+        <div class="cursor-pointer" 
+            hx-post="/sign-out"
+            hx-trigger="click"
+            hx-replace-url="/sign-in"
+            hx-target="#${ROOT_ID}">Say Cya!</div>
     </div>`;
 }
 
