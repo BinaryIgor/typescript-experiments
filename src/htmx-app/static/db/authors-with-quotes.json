@@ -18,7 +18,12 @@
     {
         "name": "Jordan Peterson",
         "note": "Some note about the author.",
-        "quotes": []
+        "quotes": [
+            "I don't think that you have any insight whatsoever into your capacity for good until you have some well-developed insight into your capacity for evil.",
+            "When you have something to say, silence is a lie.",
+            "You're going to pay a price for every bloody thing you do and everything you don't do. You don't get to choose to not pay a price. You get to choose which poison you're going to take. That's it.",
+            "If you don't say what you think then you kill your unborn self."
+        ]
     },
     {
         "name": "Saifedean Ammous",
