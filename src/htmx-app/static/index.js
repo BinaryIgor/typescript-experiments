@@ -2,7 +2,7 @@ console.log("Loading index js...");
 
 const navigationId = "app-navigation";
 const FORM_LABEL = "data-form";
-const CONFIRMABLE_FORM_LABEL = "data-confirmable-form";
+const CONFIRMABLE_ELEMENT_LABEL = "data-confirmable-element";
 const SUBMIT_FORM_LABEL = "data-submit-form";
 const HIDDEN_CLASS = "hidden";
 const DISABLED_CLASS = "disabled";
@@ -82,7 +82,7 @@ function initConfirmableModal() {
 
     document.addEventListener(HTMX_EVENTS.confirm, e => {
         const sourceElement = e.detail.elt;
-        const confirmableMessage = sourceElement.getAttribute(CONFIRMABLE_FORM_LABEL);
+        const confirmableMessage = sourceElement.getAttribute(CONFIRMABLE_ELEMENT_LABEL);
         console.log("Can you confirm it first?", confirmableMessage);
         if (confirmableMessage) {
             e.preventDefault();
@@ -92,7 +92,7 @@ function initConfirmableModal() {
         }
     });
 
-    document.addEventListener("click", () => {
+    confirmableModal.addEventListener("click", () => {
         if (isModalShown()) {
             hideModal();
         }

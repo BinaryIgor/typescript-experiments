@@ -6,7 +6,7 @@ import { Author, Authors } from "./authors";
 import { Quote, Quotes } from "./quotes";
 import * as FilesDb from "./files-db";
 import * as Pages from "./pages";
-import { QuoteNotesService, QuoteNote, InMemoryQuoteNotesRepository, QuoteNoteInput } from "./quote-notes";
+import { QuoteNotesService, QuoteNote, InMemoryQuoteNotesRepository, QuoteNoteInput, NewQuoteNote } from "./quote-notes";
 import { AppError, ErrorCode, Errors } from "./errors";
 import { Base64PasswordHasher, InMemoryUserRepository, UserService, UserSignInInput } from "./users";
 import { AuthSessions, AuthUser } from "./auth";
@@ -95,8 +95,6 @@ const asyncHandler = (fn: Function) => (req: Request, res: Response, next: NextF
 }
 
 app.use(asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    console.log("Just intercepting every single request with cookie", req.path, req.headers);
-
     const session = cookieValue(req, SESSION_COOKIE);
     let user: AuthUser | null;
 
@@ -278,14 +276,17 @@ app.get(`${AUTHORS_ENDPOINT}/:name`, (req: Request, res: Response) => {
 });
 
 app.get(`${QUOTES_ENDPOINT}/:id`, (req: Request, res: Response) => {
-    const quoteId = req.params.id as any as number;
+    const quoteId = parseInt(req.params.id);
 
     const quote = quotes.ofId(quoteId);
     if (quote) {
+        const { notes, deleteableNoteIds } = quoteNoteViews(currentUserOrThrow(req).id, quoteId);
         returnHtml(res, Pages.authorQuotePage({
             author: quote.author,
             quote: quote.content,
-            notes: quoteNoteViews(quoteId),
+            notes: notes,
+            deletableNoteIds: deleteableNoteIds,
+            deleteQuoteNoteEndpoint: deleteQuoteNoteEndpoint,
             getQuotesNotesSummaryEndpoint: getQuoteNotesSummaryEndpoint(quoteId),
             addQuoteNoteEndpoint: addQuoteNoteEndpoint(quoteId),
             validateQuoteNoteEndpoint: QUOTE_NOTES_VALIDATE_NOTE_ENDPOINT,
@@ -298,12 +299,14 @@ app.get(`${QUOTES_ENDPOINT}/:id`, (req: Request, res: Response) => {
     }
 });
 
-function quoteNoteViews(quoteId: number): Pages.QuoteNoteView[] {
+function quoteNoteViews(currentUserId: number, quoteId: number): { notes: Pages.QuoteNoteView[], deleteableNoteIds: number[] } {
     const notes = quoteNotesService.notesOfQuoteSortedByTimestamp(quoteId);
     const authorIds = notes.map(n => n.noteAuthorId);
     const authors = userService.usersOfIds(authorIds);
 
-    return ViewMapper.toQuoteNoteViews(notes, authors);
+    const deleteableNoteIds = notes.filter(n => n.noteAuthorId == currentUserId).map(n => n.noteId);
+
+    return { notes: ViewMapper.toQuoteNoteViews(notes, authors), deleteableNoteIds }
 }
 
 function getQuoteNotesSummaryEndpoint(quoteId: number): string {
@@ -314,16 +317,23 @@ function addQuoteNoteEndpoint(quoteId: number): string {
     return `${QUOTES_ENDPOINT}/${quoteId}/${QUOTE_NOTES_ENDPOINT_PART}`;
 }
 
+function deleteQuoteNoteEndpoint(noteId: number): string {
+    return `${QUOTES_ENDPOINT}/${QUOTE_NOTES_ENDPOINT_PART}/${noteId}`;
+}
+
 app.post(`${QUOTES_ENDPOINT}/:id/${QUOTE_NOTES_ENDPOINT_PART}`, (req: Request, res: Response) => {
-    const quoteId = req.params.id as any as number;
+    const quoteId = parseInt(req.params.id);
 
     const input = req.body as QuoteNoteInput;
     const author = currentUserOrThrow(req);
 
-    const note = new QuoteNote(quoteId, input.note, author.id, Date.now());
+    const note = new NewQuoteNote(quoteId, input.note, author.id, Date.now());
 
     quoteNotesService.addNote(note);
-    returnHtml(res, Pages.quoteNotesPage(quoteNoteViews(quoteId)),
+
+    const { notes: newNotes, deleteableNoteIds } = quoteNoteViews(author.id, quoteId);
+
+    returnHtml(res, Pages.quoteNotesPage(newNotes, deleteableNoteIds, deleteQuoteNoteEndpoint),
         hxResetFormTrigger(Pages.LABELS.quoteNoteForm,
             hxAdditionalTrigersOfKeys(Pages.TRIGGERS.getNotesSummary)));
 });
@@ -339,6 +349,16 @@ app.post(QUOTE_NOTES_VALIDATE_NOTE_ENDPOINT, (req: Request, res: Response) => {
     returnHtml(res, Pages.inputErrorIf(noteError),
         hxFormValidatedTrigger(Pages.LABELS.quoteNoteForm,
             noteError == null));
+});
+
+app.delete(`${QUOTES_ENDPOINT}/${QUOTE_NOTES_ENDPOINT_PART}/:id`, (req: Request, res: Response) => {
+    const quoteNoteId = parseInt(req.params.id);
+
+    const author = currentUserOrThrow(req);
+
+    quoteNotesService.deleteNote(quoteNoteId, author.id);
+
+    returnHtml(res, "", Pages.TRIGGERS.getNotesSummary);
 });
 
 app.get("/", (req: Request, res: Response) => returnHomePage(req, res));

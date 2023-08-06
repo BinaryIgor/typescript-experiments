@@ -15,7 +15,7 @@ export const AUTHORS_SEARCH_INPUT = "authors-search";
 const INDEX_JS_SRC = "/index.js";
 
 export const FORM_LABEL = "data-form";
-export const CONFIRMABLE_FORM_LABEL = "data-confirmable-form";
+export const CONFIRMABLE_ELEMENT_LABEL = "data-confirmable-element";
 export const SUBMIT_FORM_LABEL = "data-submit-form";
 
 export const LABELS = {
@@ -117,7 +117,7 @@ export function authorsSearchResult(result: Author[], authorEndpoint: Function):
     return `<div class="space-y-4">${resultList}</div>`
 }
 
-export function authorPage(author: Author, authorQuotes: Quote[], quoteEndpoint: Function, 
+export function authorPage(author: Author, authorQuotes: Quote[], quoteEndpoint: Function,
     renderFullPage: boolean,
     currentUser: string | null): string {
     const quotes = authorQuotes.map(q => `
@@ -145,6 +145,8 @@ export function authorQuotePage(params: {
     author: string,
     quote: string,
     notes: QuoteNoteView[],
+    deletableNoteIds: number[],
+    deleteQuoteNoteEndpoint: (quoteId: number) => string,
     getQuotesNotesSummaryEndpoint: string,
     addQuoteNoteEndpoint: string,
     validateQuoteNoteEndpoint: string,
@@ -174,13 +176,13 @@ export function authorQuotePage(params: {
                 hx-post="${params.addQuoteNoteEndpoint}"
                 hx-target="#${notesListId}"
                 ${FORM_LABEL}="${LABELS.quoteNoteForm}"
-                ${CONFIRMABLE_FORM_LABEL}="${confirmQuoteNoteMessage}">
-                ${inputWithHiddenError('note', 'Your note...', params.validateQuoteNoteEndpoint)}
+                ${CONFIRMABLE_ELEMENT_LABEL}="${confirmQuoteNoteMessage}">
+                ${textAreaWithHiddenError('note', 'Your note...', params.validateQuoteNoteEndpoint)}
                 <input id="${addNoteFormSubmitId}" class="absolute bottom-0 right-0 p-4 ${DISABLED_CLASS}"
                     type="submit" value="Add"
                     ${SUBMIT_FORM_LABEL}="${LABELS.quoteNoteForm}" disabled>
             </form>
-            ${quoteNotesPage(params.notes)}
+            ${quoteNotesPage(params.notes, params.deletableNoteIds, params.deleteQuoteNoteEndpoint)}
             </div>
         </div>
     </div>
@@ -201,12 +203,31 @@ export function quoteNotesSummaryComponent(quoteNotes: number): string {
     return `Notes (${quoteNotes})`;
 }
 
-export function quoteNotesPage(quoteNotes: QuoteNoteView[]) {
+export function quoteNotesPage(quoteNotes: QuoteNoteView[],
+    deleteableQuoteNoteIds: number[],
+    deleteQuoteNoteEndpoint: (noteId: number) => string) {
+
+    const confirmQuoteNoteDeleteMessage = "Are you sure you want to delete this note?";
+        
     return `<div id="notes-list">
-            ${quoteNotes.map(qn => `<div class="shadow-md p-4">
-                <p class="text-xl">"${qn.note}"</p>
-                <p class="text-right">Added by ${qn.noteAuthor}, on ${qn.timestamp}</p>
-            </div>`).join('\n')}
+            ${quoteNotes.map(qn => {
+                const noteElementId = `notes-list-element-${qn.noteId}`;
+                let deleteEl: string;
+                if(deleteableQuoteNoteIds.includes(qn.noteId)) {
+                   deleteEl = `<span class="text-3xl absolute top-0 right-0 p-2 cursor-pointer"
+                   hx-swap="delete"
+                   hx-target="#${noteElementId}"
+                   hx-delete="${deleteQuoteNoteEndpoint(qn.noteId)}"
+                   ${CONFIRMABLE_ELEMENT_LABEL}="${confirmQuoteNoteDeleteMessage}">&times</span>`;
+                } else {
+                    deleteEl = "";
+                }
+                return `<div id="${noteElementId}" class="shadow-md p-4 relative">
+                    <p class="text-xl whitespace-pre">"${qn.note}"</p>
+                    <p class="text-right">Added by ${qn.noteAuthor}, on ${qn.timestamp}</p>
+                    ${deleteEl}
+                </div>`})
+            .join('\n')}
         </div>`;
 }
 
@@ -217,6 +238,16 @@ export function inputWithHiddenError(name: string, placeholder: string, validate
         hx-target="next .error-message"
         hx-swap="outerHTML"
         hx-post="${validateEndpoint}">
+    ${inputErrorIf()}`
+}
+
+export function textAreaWithHiddenError(name: string, placeholder: string, validateEndpoint: string): string {
+    return `<textarea name="${name}" placeholder="${placeholder}" 
+        class="h-24 w-9/12 resize-none"
+        hx-trigger="keyup changed delay:500ms"
+        hx-target="next .error-message"
+        hx-swap="outerHTML"
+        hx-post="${validateEndpoint}"></textarea>
     ${inputErrorIf()}`
 }
 
@@ -257,7 +288,7 @@ function errorModal(): string {
 //TODO: restructure the code!
 export function navigationComponent(currentUser: string | null): string {
     const hiddenClass = currentUser ? "" : ` ${HIDDEN_CLASS}`;
-    return `<div id="app-navigation" class="sticky flex justify-between top-0 w-full p-4 border-b-2 border-black bg-white${hiddenClass}"
+    return `<div id="app-navigation" class="z-50 sticky flex justify-between top-0 w-full p-4 border-b-2 border-black bg-white${hiddenClass}"
         hx-get="/current-user"
         hx-trigger="${TRIGGERS.showNavigation} from:body"
         hx-swap="outerHTML">
@@ -291,7 +322,9 @@ export function errorPage(errors: ErrorCode[], renderFullPage: boolean, currentU
 }
 
 export class QuoteNoteView {
-    constructor(readonly quoteId: number,
+    constructor(
+        readonly noteId: number,
+        readonly quoteId: number,
         readonly note: string,
         readonly noteAuthor: string,
         readonly timestamp: string) { }

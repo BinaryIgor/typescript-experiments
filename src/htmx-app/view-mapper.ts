@@ -7,6 +7,6 @@ export function toQuoteNoteViews(quoteNotes: QuoteNote[], authors: Map<number, U
         const author = authors.get(q.noteAuthorId)?.name ?? "Anonymous";
         //TODO: format!
         const timestamp = new Date(q.timestamp).toUTCString();
-        return new QuoteNoteView(q.quoteId, q.note, author, timestamp);
+        return new QuoteNoteView(q.noteId, q.quoteId, q.note, author, timestamp);
     });
 }

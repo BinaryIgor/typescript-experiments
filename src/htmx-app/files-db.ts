@@ -1,5 +1,5 @@
 import { Author, Authors } from "./authors";
-import { QuoteNote, QuoteNotesRepository } from "./quote-notes";
+import { NewQuoteNote, QuoteNote, QuoteNotesRepository } from "./quote-notes";
 import { Quote, Quotes } from "./quotes";
 import { User, UserRepository } from "./users";
 import fs from "fs";
@@ -45,7 +45,7 @@ export function importQuoteNotes(dbJson: string, quoteNotesRepository: QuoteNote
     console.log(`Db loaded, we have ${quoteNotesFromDb.length} quote notes of users!`);
 
     for (let qn of quoteNotesFromDb) {
-        quoteNotesRepository.create(qn as QuoteNote);
+        quoteNotesRepository.create(qn as NewQuoteNote);
     }
 }
 
