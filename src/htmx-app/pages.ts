@@ -93,7 +93,7 @@ function wrappedInMainPage(html: string, currentUser: string | null): string {
         <title>Authors</title>
         <link rel="stylesheet" href="/style.css"/>
       </head>
-      <body hx-history="false">
+      <body>
         ${navigationComponent(currentUser)}
         ${confirmableModal()}
         ${errorModal()}
@@ -297,6 +297,7 @@ export function navigationComponent(currentUser: string | null): string {
             hx-post="/sign-out"
             hx-trigger="click"
             hx-replace-url="/sign-in"
+            hx-swap="innerHTML"
             hx-target="#${ROOT_ID}">Say Cya!</div>
     </div>`;
 }
