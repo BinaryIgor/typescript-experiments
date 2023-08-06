@@ -111,7 +111,7 @@ function initEventListeners() {
         console.log("Received form-validated event...", e);
         const label = e.detail.label;
         if (label) {
-            const formValid = Events.isFormValid(e);
+            const formValid = e.detail.valid;
 
             const submitButtons = document.querySelectorAll(`[${SUBMIT_FORM_LABEL}="${label}"]`);
             submitButtons.forEach(sb => {
@@ -151,6 +151,7 @@ function initEventListeners() {
     });
 }
 
+//TODO: do we really need it?
 function registerHtmxExtensions() {
     htmx.defineExtension('reset-form', {
         onEvent: function (name, e) {
@@ -162,45 +163,6 @@ function registerHtmxExtensions() {
         }
     })
 }
-
-const Events = {
-    doesEventHaveAnyOfLabels(e, ...labels) {
-        const eLabel = e.detail.label;
-        for (let l of labels) {
-            if (eLabel == l) {
-                return true;
-            }
-        }
-        return false;
-    },
-    doesEventHaveLabel(e, label) {
-        return e.detail.label == label;
-    },
-    isFormValid(e) {
-        return e.detail.valid == true;
-    }
-}
-
-// function setFormChangeListener(submitSelector = "input[type='submit']", disabledClass = "disabled") {
-//     const target = this.event.currentTarget;
-//     console.log("Input has changed...", target);
-
-//     const errors = target.getElementsByClassName("error-message active")
-
-//     console.log("Errors: ", errors);
-
-//     const submitButton = target.querySelector(submitSelector);
-
-//     console.log("Submit: ", submitButton);
-
-//     if (errors && errors.length > 0) {
-//         submitButton.disabled = true;
-//         submitButton.classList.add(disabledClass);
-//     } else {
-//         submitButton.disabled = false;
-//         submitButton.classList.remove(disabledClass);
-//     }
-// }
 
 function addSelfRemovingEventListener(event, callback, element = document) {
     const handler = (e) => {

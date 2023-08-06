@@ -12,6 +12,7 @@ const ERRORS_TRANSLATIONS = {
 } as any;
 
 export const AUTHORS_SEARCH_INPUT = "authors-search";
+const STYLE_SRC = "/style.js";
 const INDEX_JS_SRC = "/index.js";
 
 export const FORM_LABEL = "data-form";
@@ -90,7 +91,7 @@ function wrappedInMainPage(html: string, currentUser: string | null): string {
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
-        <title>Authors</title>
+        <title>Some wisdom</title>
         <link rel="stylesheet" href="/style.css"/>
       </head>
       <body>
