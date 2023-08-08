@@ -1,6 +1,4 @@
-import { Author } from "../authors/domain";
-import { AppError, ErrorCode } from "./errors";
-import { QuoteNote } from "../quote-notes";
+import { ErrorCode, OptionalErrorCode } from "./errors";
 
 const HTMX_SRC = "https://unpkg.com/htmx.org@1.9.3";
 export const ROOT_ID = "app";
@@ -18,18 +16,17 @@ export const FORM_LABEL = "data-form";
 export const CONFIRMABLE_ELEMENT_LABEL = "data-confirmable-element";
 export const SUBMIT_FORM_LABEL = "data-submit-form";
 
-export const LABELS = {
-    quoteNoteForm: "quote-note-form"
-};
-
 export const HIDDEN_CLASS = "hidden";
 export const DISABLED_CLASS = "disabled";
 
 export const TRIGGERS = {
-    getNotesSummary: "get-notes-summary",
     showNavigation: "show-navigation",
     hideNavigation: "hide-navigation"
 };
+
+const GET_CURRENT_USER_ENDPOINT = "/user";
+const SIGN_IN_ENDPOINT = "/user/sign-in";
+const SIGN_OUT_ENDPOINT = "/user/sign-out";
 
 export function wrappedInMainPage(html: string, currentUser: string | null): string {
     return `<!DOCTYPE html>
@@ -54,97 +51,6 @@ export function wrappedInMainPage(html: string, currentUser: string | null): str
       <script src="${HTMX_SRC}"></script>
       <script src="${INDEX_JS_SRC}"></script>
     </html>`;
-}
-
-//TODO: simplify params
-export function authorQuotePage(params: {
-    author: string,
-    quote: string,
-    notes: QuoteNoteView[],
-    deletableNoteIds: number[],
-    deleteQuoteNoteEndpoint: (quoteId: number) => string,
-    getQuotesNotesSummaryEndpoint: string,
-    addQuoteNoteEndpoint: string,
-    validateQuoteNoteEndpoint: string,
-    validateQuoteAuthorEndpoint: string,
-    renderFullPage: boolean,
-    currentUser: string | null
-}): string {
-    const addNoteButtonId = "add-note-button";
-    const addNoteFormId = "add-note-form";
-    const addNoteFormSubmitId = "add-note-form-submit";
-    const notesListId = "notes-list";
-
-    const confirmQuoteNoteMessage = "Are you sure that you want to add this note?";
-
-    const page = `<div class="shadow-md p-6">
-        <p class="text-2xl">"${params.quote}"</p>
-        <p class="text-xl font-bold text-right">${params.author}</p>
-    </div>
-        <div class="p-4">
-            <div class="flex justify-between">
-                <p hx-get="${params.getQuotesNotesSummaryEndpoint}" hx-trigger="${TRIGGERS.getNotesSummary} from:body">
-                    ${quoteNotesSummaryComponent(params.notes.length)}
-                </p>
-                <button id="${addNoteButtonId}">Add</button>
-            </div>
-            <form id="${addNoteFormId}" class="p-4 shadow-md relative ${HIDDEN_CLASS}"
-                hx-post="${params.addQuoteNoteEndpoint}"
-                hx-target="#${notesListId}"
-                ${FORM_LABEL}="${LABELS.quoteNoteForm}"
-                ${CONFIRMABLE_ELEMENT_LABEL}="${confirmQuoteNoteMessage}">
-                ${textAreaWithHiddenError('note', 'Your note...', params.validateQuoteNoteEndpoint)}
-                <input id="${addNoteFormSubmitId}" class="absolute bottom-0 right-0 p-4 ${DISABLED_CLASS}"
-                    type="submit" value="Add"
-                    ${SUBMIT_FORM_LABEL}="${LABELS.quoteNoteForm}" disabled>
-            </form>
-            ${quoteNotesPage(params.notes, params.deletableNoteIds, params.deleteQuoteNoteEndpoint)}
-            </div>
-        </div>
-    </div>
-    ${inlineJs(`
-        const addNoteForm = document.getElementById("${addNoteFormId}");
-        const addNoteSubmit = document.getElementById("${addNoteFormSubmitId}");
-
-        document.getElementById("${addNoteButtonId}").onclick = () => {
-            addNoteForm.classList.toggle("${HIDDEN_CLASS}");
-        };
-    `)}
-    `;
-
-    return params.renderFullPage ? wrappedInMainPage(page, params.currentUser) : page;
-}
-
-export function quoteNotesSummaryComponent(quoteNotes: number): string {
-    return `Notes (${quoteNotes})`;
-}
-
-export function quoteNotesPage(quoteNotes: QuoteNoteView[],
-    deleteableQuoteNoteIds: number[],
-    deleteQuoteNoteEndpoint: (noteId: number) => string) {
-
-    const confirmQuoteNoteDeleteMessage = "Are you sure you want to delete this note?";
-        
-    return `<div id="notes-list">
-            ${quoteNotes.map(qn => {
-                const noteElementId = `notes-list-element-${qn.noteId}`;
-                let deleteEl: string;
-                if(deleteableQuoteNoteIds.includes(qn.noteId)) {
-                   deleteEl = `<span class="text-3xl absolute top-0 right-0 p-2 cursor-pointer"
-                   hx-swap="delete"
-                   hx-target="#${noteElementId}"
-                   hx-delete="${deleteQuoteNoteEndpoint(qn.noteId)}"
-                   ${CONFIRMABLE_ELEMENT_LABEL}="${confirmQuoteNoteDeleteMessage}">&times</span>`;
-                } else {
-                    deleteEl = "";
-                }
-                return `<div id="${noteElementId}" class="shadow-md p-4 relative">
-                    <p class="text-xl whitespace-pre">"${qn.note}"</p>
-                    <p class="text-right">Added by ${qn.noteAuthor}, on ${qn.timestamp}</p>
-                    ${deleteEl}
-                </div>`})
-            .join('\n')}
-        </div>`;
 }
 
 export function inputWithHiddenError(name: string, placeholder: string, validateEndpoint: string,
@@ -175,12 +81,12 @@ function translatedError(error: ErrorCode): string {
     return ERRORS_TRANSLATIONS[error] ?? error;
 }
 
-export function inputErrorIf(error: ErrorCode | null = null): string {
+export function inputErrorIf(error: OptionalErrorCode = null): string {
     const translated = error ? translatedError(error) : "";
     return `<p class="error-message ${translated ? 'active' : 'inactive'}">${translated}</p>`
 }
 
-function inlineJs(js: string, scoped: boolean = true): string {
+export function inlineJs(js: string, scoped: boolean = true): string {
     if (scoped) {
         js = `
             (function() {
@@ -192,7 +98,7 @@ function inlineJs(js: string, scoped: boolean = true): string {
     return `<script type="module">${js}</script>`
 }
 
-function errorModal(): string {
+export function errorModal(): string {
     return `<div class="modal ${HIDDEN_CLASS}" id="error-modal">
         <div class="modal-content">
             <span id="error-modal-close" class="close">&times;</span>
@@ -201,18 +107,17 @@ function errorModal(): string {
     </div>`;
 }
 
-//TODO: restructure the code, move endpoints deps!
 export function navigationComponent(currentUser: string | null): string {
     const hiddenClass = currentUser ? "" : ` ${HIDDEN_CLASS}`;
-    return `<div id="app-navigation" class="z-50 sticky flex justify-between top-0 w-full p-4 border-b-2 border-black bg-white${hiddenClass}"
-        hx-get="/user"
+    return `<div class="z-50 sticky flex justify-between top-0 w-full p-4 border-b-2 border-black bg-white${hiddenClass}"
+        hx-get="${GET_CURRENT_USER_ENDPOINT}"
         hx-trigger="${TRIGGERS.showNavigation} from:body"
         hx-swap="outerHTML">
         <div>Some naive navigation for a reader: ${currentUser}</div>
         <div class="cursor-pointer" 
-            hx-post="/user/sign-out"
+            hx-post="${SIGN_IN_ENDPOINT}"
             hx-trigger="click"
-            hx-replace-url="/user/sign-in"
+            hx-replace-url="${SIGN_OUT_ENDPOINT}"
             hx-swap="innerHTML"
             hx-target="#${ROOT_ID}">Say Cya!</div>
     </div>`;
@@ -257,14 +162,4 @@ export function resetFormTrigger(label: string, additionalTriggers: any): string
 export function additionalTrigersOfKeys(...keys: string[]): any {
     const jsonBody = [...keys].map(k => `"${k}": true`).join(",\n");
     return JSON.parse(`{ ${jsonBody} }`);
-}
-
-
-export class QuoteNoteView {
-    constructor(
-        readonly noteId: number,
-        readonly quoteId: number,
-        readonly note: string,
-        readonly noteAuthor: string,
-        readonly timestamp: string) { }
 }

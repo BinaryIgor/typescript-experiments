@@ -1,9 +1,10 @@
 import { Author, Quote } from "./authors/domain";
-import { NewQuoteNote, QuoteNote, QuoteNotesRepository } from "./quote-notes";
 import { User } from "./user/domain";
 import fs from "fs";
 import { UserClient } from "./user/module";
 import { AuthorClient } from "./authors/module";
+import { QuoteClient } from "./quotes/module";
+import { NewQuoteNote } from "./quotes/domain";
 
 class AuthorToImport {
     constructor(readonly name: string,
@@ -41,16 +42,16 @@ export function importUsers(dbJson: string, client: UserClient) {
     }
 }
 
-export function importQuoteNotes(dbJson: string, quoteNotesRepository: QuoteNotesRepository) {
+export function importQuoteNotes(dbJson: string, quoteClient: QuoteClient) {
     const quoteNotesFromDb = JSON.parse(dbJson);
 
     console.log(`Db loaded, we have ${quoteNotesFromDb.length} quote notes of users!`);
 
     for (let qn of quoteNotesFromDb) {
-        quoteNotesRepository.create(qn as NewQuoteNote);
+        quoteClient.createQuoteNote(qn as NewQuoteNote);
     }
 }
 
-export function dumpQuoteNotes(dbPath: string, quoteNotesRepository: QuoteNotesRepository): Promise<void> {
-    return fs.promises.writeFile(dbPath, JSON.stringify(quoteNotesRepository.allNotes()));
+export function dumpQuoteNotes(dbPath: string, quoteClient: QuoteClient): Promise<void> {
+    return fs.promises.writeFile(dbPath, JSON.stringify(quoteClient.allQuoteNotes()));
 }

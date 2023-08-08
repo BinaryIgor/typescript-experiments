@@ -1,16 +1,11 @@
 import { AuthUser } from "../auth/auth";
-import { AppError, ErrorCode, Errors } from "../shared/errors";
+import { AppError, Errors, OptionalErrorCode } from "../shared/errors";
 import * as Validator from "../shared/validator";
 
 const MIN_USER_NAME_LENGTH = 2;
 const MAX_USER_NAME_LENGTH = 30;
 const MIN_USER_PASSWORD_LENGTH = 8;
 const MAX_USER_PASSWORD_LENGTH = 50;
-
-//TODO: move it!
-export class UserSignInInput {
-    constructor(readonly name: string, readonly password: string) { }
-}
 
 export class UserService {
 
@@ -35,13 +30,13 @@ export class UserService {
         return new AuthUser(user.id, user.name);
     }
 
-    validateUserName(name: string): ErrorCode | null {
+    validateUserName(name: string): OptionalErrorCode {
         return Validator.hasAnyContent(name) 
             && Validator.hasLength(name, MIN_USER_NAME_LENGTH, MAX_USER_NAME_LENGTH) ?
             null : Errors.INVALID_USER_NAME;
     }
 
-    validateUserPassword(password: string): ErrorCode | null {
+    validateUserPassword(password: string): OptionalErrorCode {
         return Validator.hasAnyContent(password) 
             && Validator.hasLength(password, MIN_USER_PASSWORD_LENGTH, MAX_USER_PASSWORD_LENGTH) ?
             null : Errors.INVALID_USER_PASSWORD;

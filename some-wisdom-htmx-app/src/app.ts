@@ -4,25 +4,15 @@ import bodyParser from "body-parser";
 import express, { NextFunction, Request, Response } from "express";
 import * as FilesDb from "./files-db";
 import * as Views from "./shared/views";
-import { QuoteNotesService, InMemoryQuoteNotesRepository, QuoteNoteInput, NewQuoteNote } from "./quote-notes";
 import { AppError, ErrorCode, Errors } from "./shared/errors";
-import { UserService, UserSignInInput } from "./user/domain";
 import { AuthSessions, AuthUser } from "./auth/auth";
-import * as ViewMapper from "./view-mapper";
 import * as Web from "./shared/web";
-import { currentUser, setCurrentUser, SessionCookies, currentUserOrThrow, currentUserName } from "./auth/web";
+import { setCurrentUser, SessionCookies, currentUserName } from "./auth/web";
 import * as AuthorsModule from "./authors/module";
 import * as UserModule from "./user/module";
+import * as QuotesModule from "./quotes/module";
 
 const SERVER_PORT = 8080;
-
-const SEARCH_AUTHORS_ENDPOINT = "/search-authors";
-const AUTHORS_ENDPOINT = "/authors";
-const QUOTES_ENDPOINT = "/quotes";
-const QUOTE_NOTES_ENDPOINT_PART = "notes";
-const QUOTE_NOTES_VALIDATE_NOTE_ENDPOINT = `${QUOTES_ENDPOINT}/validate-note`;
-const QUOTE_NOTES_VALIDATE_AUTHOR_ENDPOINT = `${QUOTES_ENDPOINT}/validate-author`;
-const QUOTE_NOTES_SUMMARY_ENDPOINT_PART = "notes-summary";
 
 //5 hours;
 const sessionDuration = 5 * 60 * 60 * 1000;
@@ -35,16 +25,12 @@ if (!fs.existsSync(sessionsDir)) {
 const authSessions = new AuthSessions(sessionsDir, sessionDuration, 60 * 1000);
 const sessionCookies = new SessionCookies(sessionDuration, "session-id", false);
 
-const quoteNotesRepository = new InMemoryQuoteNotesRepository();
-const quoteNotesService = new QuoteNotesService(quoteNotesRepository);
+const authorsModule = AuthorsModule.build(QuotesModule.quoteEndpoint);
+const userModule = UserModule.build(authSessions, sessionCookies, authorsModule.returnHomePage);
+const quotesModule = QuotesModule.build(authorsModule.client.quoteOfId, userModule.client.usersOfIds);
 
 const dbPath = path.join(__dirname, "static", "db");
 const quoteNotesDbPath = path.join(dbPath, "__quote-notes.json");
-
-//TODO: fix deps tree!
-
-const authorsModule = AuthorsModule.build(qid => `${QUOTES_ENDPOINT}/${qid}`);
-const userModule = UserModule.build(authSessions, sessionCookies, authorsModule.returnHomePage);
 
 staticFileContentOfPath(path.join(dbPath, "authors.json"))
     .then(db => FilesDb.importAuthors(db, authorsModule.client))
@@ -55,9 +41,8 @@ staticFileContentOfPath(path.join(dbPath, "users.json"))
     .catch(e => console.log("Failed to load users db!", e));
 
 staticFileContentOfPath(quoteNotesDbPath)
-    .then(db => FilesDb.importQuoteNotes(db, quoteNotesRepository))
+    .then(db => FilesDb.importQuoteNotes(db, quotesModule.client))
     .catch(e => console.log("Failed to load (optional!) quote notes db!", e));
-
 
 
 const STATIC_ASSETS_PATH = path.join(__dirname, "static");
@@ -76,7 +61,7 @@ const app = express();
 
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Weak etags are added by default
+// Weak etags are added by default, we don't want that
 app.set('etag', false);
 
 app.use(Web.asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
@@ -85,7 +70,6 @@ app.use(Web.asyncHandler(async (req: Request, res: Response, next: NextFunction)
 
     if (session) {
         user = await authSessions.authenticate(session);
-        console.log("user of session...", user);
     } else {
         user = null;
     }
@@ -95,7 +79,6 @@ app.use(Web.asyncHandler(async (req: Request, res: Response, next: NextFunction)
     }
 
     if (isPublicRequest(req) || user) {
-        console.log("Request is public or we have a user!", user);
         if (user && session && await authSessions.shouldRefresh(session)) {
             await authSessions.refresh(session);
             sessionCookies.setCookie(res, session);
@@ -113,93 +96,6 @@ function isPublicRequest(req: Request): boolean {
 
 app.use(userModule.router);
 app.use(authorsModule.router);
-
-//TODO: fix it!
-// app.get(`${QUOTES_ENDPOINT}/:id`, (req: Request, res: Response) => {
-//     const quoteId = parseInt(req.params.id);
-
-//     const quote = quotes.ofId(quoteId);
-//     if (quote) {
-//         const { notes, deleteableNoteIds } = quoteNoteViews(currentUserOrThrow(req).id, quoteId);
-//         Web.returnHtml(res, Views.authorQuotePage({
-//             author: quote.author,
-//             quote: quote.content,
-//             notes: notes,
-//             deletableNoteIds: deleteableNoteIds,
-//             deleteQuoteNoteEndpoint: deleteQuoteNoteEndpoint,
-//             getQuotesNotesSummaryEndpoint: getQuoteNotesSummaryEndpoint(quoteId),
-//             addQuoteNoteEndpoint: addQuoteNoteEndpoint(quoteId),
-//             validateQuoteNoteEndpoint: QUOTE_NOTES_VALIDATE_NOTE_ENDPOINT,
-//             validateQuoteAuthorEndpoint: QUOTE_NOTES_VALIDATE_AUTHOR_ENDPOINT,
-//             renderFullPage: Web.shouldReturnFullPage(req),
-//             currentUser: currentUserName(req)
-//         }));
-//     } else {
-//         Web.returnNotFound(res);
-//     }
-// });
-
-function quoteNoteViews(currentUserId: number, quoteId: number): { notes: Views.QuoteNoteView[], deleteableNoteIds: number[] } {
-    const notes = quoteNotesService.notesOfQuoteSortedByTimestamp(quoteId);
-    const authorIds = notes.map(n => n.noteAuthorId);
-    const authors = userModule.client.usersOfIds(authorIds);
-
-    const deleteableNoteIds = notes.filter(n => n.noteAuthorId == currentUserId).map(n => n.noteId);
-
-    return { notes: ViewMapper.toQuoteNoteViews(notes, authors), deleteableNoteIds }
-}
-
-function getQuoteNotesSummaryEndpoint(quoteId: number): string {
-    return `${QUOTES_ENDPOINT}/${quoteId}/${QUOTE_NOTES_SUMMARY_ENDPOINT_PART}`;
-}
-
-function addQuoteNoteEndpoint(quoteId: number): string {
-    return `${QUOTES_ENDPOINT}/${quoteId}/${QUOTE_NOTES_ENDPOINT_PART}`;
-}
-
-function deleteQuoteNoteEndpoint(noteId: number): string {
-    return `${QUOTES_ENDPOINT}/${QUOTE_NOTES_ENDPOINT_PART}/${noteId}`;
-}
-
-app.post(`${QUOTES_ENDPOINT}/:id/${QUOTE_NOTES_ENDPOINT_PART}`, (req: Request, res: Response) => {
-    const quoteId = parseInt(req.params.id);
-
-    const input = req.body as QuoteNoteInput;
-    const author = currentUserOrThrow(req);
-
-    const note = new NewQuoteNote(quoteId, input.note, author.id, Date.now());
-
-    quoteNotesService.addNote(note);
-
-    const { notes: newNotes, deleteableNoteIds } = quoteNoteViews(author.id, quoteId);
-
-    Web.returnHtml(res, Views.quoteNotesPage(newNotes, deleteableNoteIds, deleteQuoteNoteEndpoint),
-        Views.resetFormTrigger(Views.LABELS.quoteNoteForm,
-            Views.additionalTrigersOfKeys(Views.TRIGGERS.getNotesSummary)));
-});
-
-app.get(`${QUOTES_ENDPOINT}/:id/${QUOTE_NOTES_SUMMARY_ENDPOINT_PART}`, (req: Request, res: Response) => {
-    const quoteId = req.params.id as any as number;
-    Web.returnHtml(res, Views.quoteNotesSummaryComponent(quoteNotesService.notesOfQuoteCount(quoteId)));
-});
-
-app.post(QUOTE_NOTES_VALIDATE_NOTE_ENDPOINT, (req: Request, res: Response) => {
-    const input = req.body as QuoteNoteInput;
-    const noteError = quoteNotesService.validateQuoteNote(input.note);
-    Web.returnHtml(res, Views.inputErrorIf(noteError),
-        Views.formValidatedTrigger(Views.LABELS.quoteNoteForm,
-            noteError == null));
-});
-
-app.delete(`${QUOTES_ENDPOINT}/${QUOTE_NOTES_ENDPOINT_PART}/:id`, (req: Request, res: Response) => {
-    const quoteNoteId = parseInt(req.params.id);
-
-    const author = currentUserOrThrow(req);
-
-    quoteNotesService.deleteNote(quoteNoteId, author.id);
-
-    Web.returnHtml(res, "", Views.TRIGGERS.getNotesSummary);
-});
 
 app.get("/", authorsModule.returnHomePage);
 app.get("/index.html", authorsModule.returnHomePage);
@@ -243,7 +139,7 @@ app.use((error: any, req: Request, res: Response, next: NextFunction) => {
 
 function appErrorStatus(error: AppError): number {
     for (let e of error.errors) {
-        if (e == Errors.NOT_AUTHENTICATED) {
+        if (e == Errors.NOT_AUTHENTICATED || e == Errors.INVALID_SESSION || e == Errors.EXPIRED_SESSION) {
             return 401;
         }
         if (e == Errors.INCORRECT_USER_PASSWORD) {
@@ -256,24 +152,6 @@ function appErrorStatus(error: AppError): number {
     return 400;
 }
 
-const server = app.listen(SERVER_PORT, () => {
+app.listen(SERVER_PORT, () => {
     console.log(`Server started on ${SERVER_PORT}`);
 });
-
-process.on('SIGTERM', shutdown);
-process.on('SIGINT', shutdown);
-
-function shutdown() {
-    console.log("Shutting down, dumping quote notes...");
-
-    FilesDb.dumpQuoteNotes(quoteNotesDbPath, quoteNotesRepository)
-        .then(() => console.log("Quote notes saved!"))
-        .catch(e => {
-            console.log("Problem while dumping quote notes to a file...", e);
-        })
-        .then(() => {
-            server.close(() => {
-                console.log("Server closed!");
-            });
-        });
-}

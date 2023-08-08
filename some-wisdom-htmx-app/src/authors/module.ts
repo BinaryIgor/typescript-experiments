@@ -3,7 +3,7 @@ import * as Web from "../shared/web";
 import * as Views from "../shared/views";
 import * as AuthorViews from "./views";
 import { InMemoryAuthorRepository, InMemoryQuoteRepository } from "./repository";
-import { Author } from "./domain";
+import { Author, Quote } from "./domain";
 import * as AuthWeb from "../auth/web";
 
 const SEARCH_AUTHORS_ENDPOINT = "/search-authors";
@@ -47,13 +47,17 @@ export function build(quoteEndpoint: (quoteId: number) => string): AuthorModule 
             SEARCH_AUTHORS_ENDPOINT,
             Web.shouldReturnFullPage(req),
             AuthWeb.currentUserName(req));
+
         Web.returnHtml(res, homePage);
     }
 
     return new AuthorModule(router, {
         create(author: Author) {
             authorRepository.create(author);
-        }
+        },
+        quoteOfId(id: number): Quote | null {
+            return quoteRepository.ofId(id);
+        },
     }, returnHomePage);
 }
 
@@ -63,5 +67,8 @@ export class AuthorModule {
 }
 
 export interface AuthorClient {
+
     create(author: Author): void
+
+    quoteOfId(id: number): Quote | null;
 }

@@ -1,26 +1,22 @@
-import { Errors, AppError, ErrorCode } from "./shared/errors";
-import * as Validator from "./shared/validator";
+import { Errors, AppError, OptionalErrorCode } from "../shared/errors";
+import * as Validator from "../shared/validator";
 
 const MIN_NOTE_LENGTH = 3;
 const MAX_NOTE_LENGTH = 1000;
 
-export class QuoteNoteInput {
-    constructor(readonly note: string) { }
-}
+export class QuoteNoteService {
 
-export class QuoteNotesService {
-
-    constructor(private readonly repository: QuoteNotesRepository) { }
+    constructor(private readonly repository: QuoteNoteRepository) { }
 
     //TODO: better validation!
-    addNote(quoteNote: NewQuoteNote) {
+    createNote(quoteNote: NewQuoteNote) {
         const quoteError = this.validateQuoteNote(quoteNote.note);
         AppError.throwIfThereAreErrors(quoteError);
 
         this.repository.create(quoteNote);
     }
 
-    validateQuoteNote(note: string): ErrorCode | null {
+    validateQuoteNote(note: string): OptionalErrorCode {
         return Validator.hasAnyContent(note) && Validator.hasLength(note, MIN_NOTE_LENGTH, MAX_NOTE_LENGTH) ?
             null : Errors.INVALID_QUOTE_NOTE_CONTENT;
     }
@@ -68,7 +64,7 @@ export class QuoteNotesService {
     }
 }
 
-export interface QuoteNotesRepository {
+export interface QuoteNoteRepository {
 
     create(newNote: NewQuoteNote): number
 
@@ -79,37 +75,6 @@ export interface QuoteNotesRepository {
     allNotes(): QuoteNote[]
 
     delete(noteId: number): void
-}
-
-export class InMemoryQuoteNotesRepository implements QuoteNotesRepository {
-   
-    private readonly notes = new Map<number,QuoteNote>();
-    private nextQuoteNoteId: number = 1;
-
-    create(newNote: NewQuoteNote): number {
-        const note = new QuoteNote(this.nextQuoteNoteId, newNote.quoteId, newNote.note, newNote.noteAuthorId, newNote.timestamp);
-        this.nextQuoteNoteId++;
-
-        this.notes.set(note.noteId, note);
-
-        return note.noteId;
-    }
-
-    ofId(noteId: number): QuoteNote | null {
-        return this.notes.get(noteId) ?? null;
-    }
-
-    allOfQuote(quoteId: number): QuoteNote[] {
-        return [...this.notes.values()].filter(n => n.quoteId == quoteId);
-    }
-
-    allNotes(): QuoteNote[] {
-        return [...this.notes.values()];
-    }
-
-    delete(noteId: number): void {
-        this.notes.delete(noteId);
-    }
 }
 
 export class NewQuoteNote {

@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { InMemoryUserRepository } from "./repository";
 import { Base64PasswordHasher } from "./password-hasher";
-import { User, UserService, UserSignInInput } from "./domain";
+import { User, UserService } from "./domain";
 import * as Web from "../shared/web";
 import * as Views from "../shared/views";
 import * as UserViews from "./views";
@@ -100,6 +100,10 @@ export function build(authSessions: AuthSessions,
                 return userService.usersOfIds(ids);
             }
         });
+}
+
+class UserSignInInput {
+    constructor(readonly name: string, readonly password: string) { }
 }
 
 export class UserModule {
