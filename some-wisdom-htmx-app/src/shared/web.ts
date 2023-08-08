@@ -26,6 +26,10 @@ export function returnHtml(res: Response, html: string, hxTrigger: string | null
     res.send(html);
 }
 
+export function returnNotFound(res: Response) {
+    res.sendStatus(404);
+}
+
 export function setTriggerHeader(res: Response, trigger: string) {
     res.setHeader(HX_TRIGGER_HEADER, trigger);
 }

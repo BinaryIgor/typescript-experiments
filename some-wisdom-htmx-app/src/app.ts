@@ -2,8 +2,6 @@ import fs from "fs";
 import path from "path";
 import bodyParser from "body-parser";
 import express, { NextFunction, Request, Response } from "express";
-import { Author, Authors } from "./authors";
-import { Quotes } from "./quotes";
 import * as FilesDb from "./files-db";
 import * as Views from "./shared/views";
 import { QuoteNotesService, InMemoryQuoteNotesRepository, QuoteNoteInput, NewQuoteNote } from "./quote-notes";
@@ -13,6 +11,7 @@ import { AuthSessions, AuthUser } from "./auth/auth";
 import * as ViewMapper from "./view-mapper";
 import * as Web from "./shared/web";
 import { currentUser, setCurrentUser, SessionCookies, currentUserOrThrow, currentUserName } from "./auth/web";
+import * as AuthorsModule from "./authors/module";
 import * as UserModule from "./user/module";
 
 const SERVER_PORT = 8080;
@@ -36,9 +35,6 @@ if (!fs.existsSync(sessionsDir)) {
 const authSessions = new AuthSessions(sessionsDir, sessionDuration, 60 * 1000);
 const sessionCookies = new SessionCookies(sessionDuration, "session-id", false);
 
-const authors = new Authors();
-const quotes = new Quotes();
-
 const quoteNotesRepository = new InMemoryQuoteNotesRepository();
 const quoteNotesService = new QuoteNotesService(quoteNotesRepository);
 
@@ -47,8 +43,11 @@ const quoteNotesDbPath = path.join(dbPath, "__quote-notes.json");
 
 //TODO: fix deps tree!
 
-staticFileContentOfPath(path.join(dbPath, "authors-with-quotes.json"))
-    .then(db => FilesDb.importAuthorsWithQuotes(db, authors, quotes))
+const authorsModule = AuthorsModule.build(qid => `${QUOTES_ENDPOINT}/${qid}`);
+const userModule = UserModule.build(authSessions, sessionCookies, authorsModule.returnHomePage);
+
+staticFileContentOfPath(path.join(dbPath, "authors.json"))
+    .then(db => FilesDb.importAuthors(db, authorsModule.client))
     .catch(e => console.log("Failed to load authors db!", e));
 
 staticFileContentOfPath(path.join(dbPath, "users.json"))
@@ -59,7 +58,7 @@ staticFileContentOfPath(quoteNotesDbPath)
     .then(db => FilesDb.importQuoteNotes(db, quoteNotesRepository))
     .catch(e => console.log("Failed to load (optional!) quote notes db!", e));
 
-const userModule = UserModule.build(authSessions, sessionCookies, returnHomePage);
+
 
 const STATIC_ASSETS_PATH = path.join(__dirname, "static");
 
@@ -113,60 +112,32 @@ function isPublicRequest(req: Request): boolean {
 }
 
 app.use(userModule.router);
+app.use(authorsModule.router);
 
-app.post(SEARCH_AUTHORS_ENDPOINT, (req: Request, res: Response) => {
-    console.log("Searching fo authors...", req.body);
+//TODO: fix it!
+// app.get(`${QUOTES_ENDPOINT}/:id`, (req: Request, res: Response) => {
+//     const quoteId = parseInt(req.params.id);
 
-    const query = req.body[Views.AUTHORS_SEARCH_INPUT];
-
-    const foundAuthors = authors.search(query);
-    //TODO: search quotes!
-
-    //Slow it down, for demonstration purposes
-    setTimeout(() => Web.returnHtml(res,
-        Views.authorsSearchResult(foundAuthors, (a: Author) => `${AUTHORS_ENDPOINT}/${a.name}`)),
-        1000);
-});
-
-app.get(`${AUTHORS_ENDPOINT}/:name`, (req: Request, res: Response) => {
-    const name = req.params.name;
-    console.log("Getting author:", name);
-
-    const author = authors.ofName(name);
-    const authorQuotes = quotes.ofAuthor(name);
-    if (author) {
-        Web.returnHtml(res, Views.authorPage(author, authorQuotes,
-            (qId: number) => `${QUOTES_ENDPOINT}/${qId}`,
-            Web.shouldReturnFullPage(req),
-            currentUserName(req)));
-    } else {
-        returnNotFound(res);
-    }
-});
-
-app.get(`${QUOTES_ENDPOINT}/:id`, (req: Request, res: Response) => {
-    const quoteId = parseInt(req.params.id);
-
-    const quote = quotes.ofId(quoteId);
-    if (quote) {
-        const { notes, deleteableNoteIds } = quoteNoteViews(currentUserOrThrow(req).id, quoteId);
-        Web.returnHtml(res, Views.authorQuotePage({
-            author: quote.author,
-            quote: quote.content,
-            notes: notes,
-            deletableNoteIds: deleteableNoteIds,
-            deleteQuoteNoteEndpoint: deleteQuoteNoteEndpoint,
-            getQuotesNotesSummaryEndpoint: getQuoteNotesSummaryEndpoint(quoteId),
-            addQuoteNoteEndpoint: addQuoteNoteEndpoint(quoteId),
-            validateQuoteNoteEndpoint: QUOTE_NOTES_VALIDATE_NOTE_ENDPOINT,
-            validateQuoteAuthorEndpoint: QUOTE_NOTES_VALIDATE_AUTHOR_ENDPOINT,
-            renderFullPage: Web.shouldReturnFullPage(req),
-            currentUser: currentUserName(req)
-        }));
-    } else {
-        returnNotFound(res);
-    }
-});
+//     const quote = quotes.ofId(quoteId);
+//     if (quote) {
+//         const { notes, deleteableNoteIds } = quoteNoteViews(currentUserOrThrow(req).id, quoteId);
+//         Web.returnHtml(res, Views.authorQuotePage({
+//             author: quote.author,
+//             quote: quote.content,
+//             notes: notes,
+//             deletableNoteIds: deleteableNoteIds,
+//             deleteQuoteNoteEndpoint: deleteQuoteNoteEndpoint,
+//             getQuotesNotesSummaryEndpoint: getQuoteNotesSummaryEndpoint(quoteId),
+//             addQuoteNoteEndpoint: addQuoteNoteEndpoint(quoteId),
+//             validateQuoteNoteEndpoint: QUOTE_NOTES_VALIDATE_NOTE_ENDPOINT,
+//             validateQuoteAuthorEndpoint: QUOTE_NOTES_VALIDATE_AUTHOR_ENDPOINT,
+//             renderFullPage: Web.shouldReturnFullPage(req),
+//             currentUser: currentUserName(req)
+//         }));
+//     } else {
+//         Web.returnNotFound(res);
+//     }
+// });
 
 function quoteNoteViews(currentUserId: number, quoteId: number): { notes: Views.QuoteNoteView[], deleteableNoteIds: number[] } {
     const notes = quoteNotesService.notesOfQuoteSortedByTimestamp(quoteId);
@@ -230,8 +201,8 @@ app.delete(`${QUOTES_ENDPOINT}/${QUOTE_NOTES_ENDPOINT_PART}/:id`, (req: Request,
     Web.returnHtml(res, "", Views.TRIGGERS.getNotesSummary);
 });
 
-app.get("/", (req: Request, res: Response) => returnHomePage(req, res));
-app.get("/index.html", (req: Request, res: Response) => returnHomePage(req, res));
+app.get("/", authorsModule.returnHomePage);
+app.get("/index.html", authorsModule.returnHomePage);
 
 app.get("*", async (req: Request, res: Response) => {
     console.log("REq body...", req.body);
@@ -241,7 +212,7 @@ app.get("*", async (req: Request, res: Response) => {
         const fileName = req.url.substring(req.url.lastIndexOf("/"));
         Web.returnJs(res, await staticFileContentOfPath(path.join(STATIC_ASSETS_PATH, fileName)));
     } else {
-        returnNotFound(res);
+        Web.returnNotFound(res);
     }
 })
 
@@ -251,15 +222,6 @@ function staticFileContent(filename: string): Promise<string> {
 
 function staticFileContentOfPath(path: string): Promise<string> {
     return fs.promises.readFile(path, 'utf-8');
-}
-
-function returnHomePage(req: Request, res: Response) {
-    Web.returnHtml(res, Views.homePage(authors.random(3).map(a => a.name), SEARCH_AUTHORS_ENDPOINT,
-        Web.shouldReturnFullPage(req), currentUserName(req)));
-}
-
-function returnNotFound(res: Response) {
-    res.sendStatus(404);
 }
 
 app.use((error: any, req: Request, res: Response, next: NextFunction) => {

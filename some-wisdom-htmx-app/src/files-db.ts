@@ -1,9 +1,9 @@
-import { Author, Authors } from "./authors";
+import { Author, Quote } from "./authors/domain";
 import { NewQuoteNote, QuoteNote, QuoteNotesRepository } from "./quote-notes";
-import { Quote, Quotes } from "./quotes";
-import { User, UserRepository } from "./user/domain";
+import { User } from "./user/domain";
 import fs from "fs";
 import { UserClient } from "./user/module";
+import { AuthorClient } from "./authors/module";
 
 class AuthorToImport {
     constructor(readonly name: string,
@@ -11,7 +11,7 @@ class AuthorToImport {
         readonly quotes: string[]) { }
 }
 
-export function importAuthorsWithQuotes(dbJson: string, authors: Authors, quotes: Quotes) {
+export function importAuthors(dbJson: string, client: AuthorClient) {
     const authorsFromDb = JSON.parse(dbJson);
 
     console.log(`Db loaded, we have ${authorsFromDb.length} authors!`);
@@ -21,12 +21,13 @@ export function importAuthorsWithQuotes(dbJson: string, authors: Authors, quotes
     for (let a of authorsFromDb) {
         const toImport = a as AuthorToImport;
 
-        authors.add(new Author(toImport.name, toImport.note));
-
-        toImport.quotes.forEach(q => {
-            quotes.add(new Quote(nextQuoteId, toImport.name, q));
+        const quotes =  toImport.quotes.map(q => {
+            const quote = new Quote(nextQuoteId, toImport.name, q);
             nextQuoteId++;
+            return quote;
         });
+
+        client.create(new Author(toImport.name, toImport.note, quotes));
     }
 }
 
