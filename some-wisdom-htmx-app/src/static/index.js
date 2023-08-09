@@ -20,7 +20,6 @@ const TRIGGERS = {
 initErrorModal();
 initConfirmableModal();
 initEventListeners();
-registerHtmxExtensions();
 
 function initErrorModal() {
     const errorModal = document.getElementById("error-modal");
@@ -61,13 +60,11 @@ function initConfirmableModal() {
     }
 
     document.getElementById("confirmable-modal-cancel").onclick = () => {
-        console.log("Canceling modal...");
         e.stopPropagation();
         hideModal();
     };
     document.getElementById("confirmable-modal-ok").onclick = e => {
         e.stopPropagation();
-        console.log("Confirming modal....");
         hideModal();
         if (confirmableEvent) {
             confirmableEvent.detail.issueRequest();
@@ -83,7 +80,6 @@ function initConfirmableModal() {
     document.addEventListener(HTMX_EVENTS.confirm, e => {
         const sourceElement = e.detail.elt;
         const confirmableMessage = sourceElement.getAttribute(CONFIRMABLE_ELEMENT_LABEL);
-        console.log("Can you confirm it first?", confirmableMessage);
         if (confirmableMessage) {
             e.preventDefault();
             confirmableEvent = e;
@@ -108,7 +104,6 @@ function initEventListeners() {
     });
 
     window.addEventListener("form-validated", e => {
-        console.log("Received form-validated event...", e);
         const label = e.detail.label;
         if (label) {
             const formValid = e.detail.valid;
@@ -127,9 +122,7 @@ function initEventListeners() {
     });
 
     window.addEventListener("reset-form", e => {
-        console.log("Received reset-form event", e);
         const formToReset = document.querySelector(`[${FORM_LABEL}="${e.detail.value}"]`);
-        console.log("Form to reset...", formToReset);
         if (formToReset) {
             formToReset.querySelectorAll("input").forEach(i => {
                 if (i.type != "submit") {
@@ -141,12 +134,10 @@ function initEventListeners() {
     });
 
     document.addEventListener(HTMX_EVENTS.configRequest, e => {
-        console.log("Let's configure the request...", e);
         e.detail.headers['Authentication'] = crypto.randomUUID();
     });
 
     document.addEventListener(TRIGGERS.hideNavigation, e => {
-        console.log("hiding navigation...", e);
         document.getElementById(navigationId).classList.add(HIDDEN_CLASS);
     });
 }
