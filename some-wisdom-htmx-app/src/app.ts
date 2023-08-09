@@ -96,6 +96,7 @@ function isPublicRequest(req: Request): boolean {
 
 app.use(userModule.router);
 app.use(authorsModule.router);
+app.use(quotesModule.router);
 
 app.get("/", authorsModule.returnHomePage);
 app.get("/index.html", authorsModule.returnHomePage);
