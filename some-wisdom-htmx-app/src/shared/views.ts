@@ -109,15 +109,16 @@ export function errorModal(): string {
 
 export function navigationComponent(currentUser: string | null): string {
     const hiddenClass = currentUser ? "" : ` ${HIDDEN_CLASS}`;
-    return `<div class="z-50 sticky flex justify-between top-0 w-full p-4 border-b-2 border-black bg-white${hiddenClass}"
+    //Id is used by index.js
+    return `<div id="app-navigation" class="z-50 sticky flex justify-between top-0 w-full p-4 border-b-2 border-black bg-white${hiddenClass}"
         hx-get="${GET_CURRENT_USER_ENDPOINT}"
         hx-trigger="${TRIGGERS.showNavigation} from:body"
         hx-swap="outerHTML">
         <div>Some naive navigation for a reader: ${currentUser}</div>
         <div class="cursor-pointer" 
-            hx-post="${SIGN_IN_ENDPOINT}"
+            hx-post="${SIGN_OUT_ENDPOINT}"
             hx-trigger="click"
-            hx-replace-url="${SIGN_OUT_ENDPOINT}"
+            hx-replace-url="${SIGN_IN_ENDPOINT}"
             hx-swap="innerHTML"
             hx-target="#${ROOT_ID}">Say Cya!</div>
     </div>`;

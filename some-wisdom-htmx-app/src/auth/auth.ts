@@ -2,6 +2,7 @@ import { AppError, Errors } from "../shared/errors";
 import fs from "fs";
 import path from "path";
 
+//TODO: use files utils
 export class AuthSessions {
 
     //TODO: clean up expired sessions

@@ -10,7 +10,7 @@ nohup npx tailwindcss -i ./src/static/style.css -o ./dist/static/style.css --wat
 tailwind_pid=$!
 
 echo "Starting live-reloading some-wisdom app, logging to $app_logs_output..."
-nohup npx nodemon src/app.ts > $app_logs_output &
+nohup npx nodemon --ignore '**/static/db/**' src/app.ts > $app_logs_output &
 app_pid=$!
 
 echo "App pid: $app_pid, tailwind: $tailwind_pid"
@@ -28,10 +28,13 @@ cleanup() {
 
 trap cleanup INT
 
-while true;
-do
-   echo "Live-reloading: waiting for close command"
-   echo "..."
-   sleep 300
-   echo
-done
+tail -f $app_logs_output
+
+# while true;
+# do
+#    echo "Live-reloading: waiting for close command"
+#    echo "..."
+
+#    sleep 300
+#    echo
+# done

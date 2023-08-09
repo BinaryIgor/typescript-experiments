@@ -9,11 +9,11 @@ export class QuoteNoteService {
     constructor(private readonly repository: QuoteNoteRepository) { }
 
     //TODO: better validation!
-    createNote(quoteNote: NewQuoteNote) {
+    async createNote(quoteNote: NewQuoteNote) {
         const quoteError = this.validateQuoteNote(quoteNote.note);
         AppError.throwIfThereAreErrors(quoteError);
 
-        this.repository.create(quoteNote);
+        await this.repository.create(quoteNote);
     }
 
     validateQuoteNote(note: string): OptionalErrorCode {
@@ -21,7 +21,7 @@ export class QuoteNoteService {
             null : Errors.INVALID_QUOTE_NOTE_CONTENT;
     }
 
-    notesOfQuoteSortedByTimestamp(quoteId: number, ascending: boolean = false): QuoteNote[] {
+    async notesOfQuoteSortedByTimestamp(quoteId: number, ascending: boolean = false): Promise<QuoteNote[]> {
         function ascendingSort(a: QuoteNote, b: QuoteNote): number {
             if (a.timestamp > b.timestamp) {
                 return 1;
@@ -43,15 +43,16 @@ export class QuoteNoteService {
         }
 
         const sort = ascending ? ascendingSort : descendingSort;
-        return this.repository.allOfQuote(quoteId).sort(sort);
+
+        return (await this.repository.allOfQuote(quoteId)).sort(sort);
     }
 
-    notesOfQuoteCount(quoteId: number): number {
-        return this.repository.allOfQuote(quoteId).length;
+    async notesOfQuoteCount(quoteId: number): Promise<number> {
+        return (await this.repository.allOfQuote(quoteId)).length;
     }
 
-    deleteNote(noteId: number, userId: number) {
-        const note = this.repository.ofId(noteId);
+    async deleteNote(noteId: number, userId: number) {
+        const note = await this.repository.ofId(noteId);
         if (!note) {
             throw AppError.ofSingleError(Errors.QUOTE_NOTE_DOES_NOT_EXIST);
         }
@@ -60,21 +61,19 @@ export class QuoteNoteService {
             throw AppError.ofSingleError(Errors.NOT_USER_QUOTE_NOTE);
         }
 
-        this.repository.delete(noteId);
+        await this.repository.delete(noteId);
     }
 }
 
 export interface QuoteNoteRepository {
 
-    create(newNote: NewQuoteNote): number
+    create(newNote: NewQuoteNote): Promise<number>
 
-    ofId(noteId: number): QuoteNote | null
+    ofId(noteId: number): Promise<QuoteNote | null>
 
-    allOfQuote(quoteId: number): QuoteNote[]
+    allOfQuote(quoteId: number): Promise<QuoteNote[]>
 
-    allNotes(): QuoteNote[]
-
-    delete(noteId: number): void
+    delete(noteId: number): Promise<void>
 }
 
 export class NewQuoteNote {

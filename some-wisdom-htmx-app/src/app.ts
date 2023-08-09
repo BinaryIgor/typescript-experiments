@@ -25,12 +25,13 @@ if (!fs.existsSync(sessionsDir)) {
 const authSessions = new AuthSessions(sessionsDir, sessionDuration, 60 * 1000);
 const sessionCookies = new SessionCookies(sessionDuration, "session-id", false);
 
-const authorsModule = AuthorsModule.build(QuotesModule.quoteEndpoint);
-const userModule = UserModule.build(authSessions, sessionCookies, authorsModule.returnHomePage);
-const quotesModule = QuotesModule.build(authorsModule.client.quoteOfId, userModule.client.usersOfIds);
-
 const dbPath = path.join(__dirname, "static", "db");
 const quoteNotesDbPath = path.join(dbPath, "__quote-notes.json");
+
+const authorsModule = AuthorsModule.build(QuotesModule.quoteEndpoint);
+const userModule = UserModule.build(authSessions, sessionCookies, authorsModule.returnHomePage);
+const quotesModule = QuotesModule.build(quoteNotesDbPath,
+    authorsModule.client.quoteOfId, userModule.client.usersOfIds);
 
 staticFileContentOfPath(path.join(dbPath, "authors.json"))
     .then(db => FilesDb.importAuthors(db, authorsModule.client))
@@ -39,11 +40,6 @@ staticFileContentOfPath(path.join(dbPath, "authors.json"))
 staticFileContentOfPath(path.join(dbPath, "users.json"))
     .then(db => FilesDb.importUsers(db, userModule.client))
     .catch(e => console.log("Failed to load users db!", e));
-
-staticFileContentOfPath(quoteNotesDbPath)
-    .then(db => FilesDb.importQuoteNotes(db, quotesModule.client))
-    .catch(e => console.log("Failed to load (optional!) quote notes db!", e));
-
 
 const STATIC_ASSETS_PATH = path.join(__dirname, "static");
 

@@ -150,28 +150,3 @@ function initEventListeners() {
         document.getElementById(navigationId).classList.add(HIDDEN_CLASS);
     });
 }
-
-//TODO: do we really need it?
-function registerHtmxExtensions() {
-    htmx.defineExtension('reset-form', {
-        onEvent: function (name, e) {
-            if (name != HTMX_EVENTS.afterRequest) {
-                return;
-            }
-            console.log("Fired event: " + name, e);
-
-        }
-    })
-}
-
-function addSelfRemovingEventListener(event, callback, element = document) {
-    const handler = (e) => {
-        try {
-            callback(e);
-        } catch (ex) {
-            console.error("Problem while calling scoped event listener", e);
-        }
-        element.removeEventListener(event, handler);
-    }
-    element.addEventListener(event, handler);
-}
