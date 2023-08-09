@@ -42,7 +42,7 @@ export function build(authSessions: AuthSessions,
         const inputValid = nameError == null && passwordError == null;
 
         Web.returnHtml(res,
-            Views.inputErrorIf(nameError),
+            Views.inputErrorIf(nameError, UserViews.CLASSES.signInNameInputError),
             Views.formValidatedTrigger(UserViews.SIGN_FORM_LABEL, inputValid));
     });
 
@@ -60,7 +60,7 @@ export function build(authSessions: AuthSessions,
         const inputValid = nameError == null && passwordError == null;
 
         Web.returnHtml(res,
-            Views.inputErrorIf(passwordError),
+            Views.inputErrorIf(passwordError, UserViews.CLASSES.signInPasswordInputError),
             Views.formValidatedTrigger(UserViews.SIGN_FORM_LABEL, inputValid));
     });
 

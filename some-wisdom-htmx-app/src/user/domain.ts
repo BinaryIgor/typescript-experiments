@@ -2,7 +2,7 @@ import { AuthUser } from "../auth/auth";
 import { AppError, Errors, OptionalErrorCode } from "../shared/errors";
 import * as Validator from "../shared/validator";
 
-const MIN_USER_NAME_LENGTH = 2;
+const MIN_USER_NAME_LENGTH = 3;
 const MAX_USER_NAME_LENGTH = 30;
 const MIN_USER_PASSWORD_LENGTH = 8;
 const MAX_USER_PASSWORD_LENGTH = 50;

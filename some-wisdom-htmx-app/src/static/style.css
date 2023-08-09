@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --text-color-primary: #fafafa;
+}
+
 /* Semantics for combining classes! */
 @layer components {
   .some-button {
@@ -9,7 +13,7 @@
   }
 
   .error-message {
-    @apply text-red-500 text-sm transition-transform origin-left duration-150 ease-in-out;
+    @apply text-red-700 text-sm transition-transform origin-left duration-150 ease-in-out;
   }
 
   /* .error-border {
@@ -26,7 +30,7 @@
 }
 
 .disabled {
-  opacity: 0.25;
+  opacity: 0.5;
 }
 
 .load-indicator {
@@ -93,4 +97,19 @@
   color: #000;
   text-decoration: none;
   cursor: pointer;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  /* border: 1px solid inherit; */
+  -webkit-text-fill-color: var(--text-color-primary);
+  -webkit-box-shadow: 0 0 0px 0px;
+  transition: background-color 5000s ease-in-out 0s;
 }
