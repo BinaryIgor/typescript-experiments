@@ -1,7 +1,7 @@
 console.log("Loading index js...");
 
 const navigationId = "app-navigation";
-const navigationDropdownOptionsId = "app-navigation-dropdown-options";
+const navigationDropdownId = "app-navigation-dropdown";
 const FORM_LABEL = "data-form";
 const CONFIRMABLE_ELEMENT_LABEL = "data-confirmable-element";
 const SUBMIT_FORM_LABEL = "data-submit-form";
@@ -20,6 +20,7 @@ const TRIGGERS = {
 
 initErrorModal();
 initConfirmableModal();
+initNavigation();
 initEventListeners();
 
 function initErrorModal() {
@@ -96,6 +97,12 @@ function initConfirmableModal() {
     });
 }
 
+function initNavigation() {
+    document.getElementById(navigationDropdownId).onmouseover = () => {
+        console.log("On mouse over!");
+    };
+}
+
 function initEventListeners() {
     window.addEventListener("popstate", e => {
         console.log("Popping state!", e);
@@ -141,10 +148,4 @@ function initEventListeners() {
     document.addEventListener(TRIGGERS.hideNavigation, e => {
         document.getElementById(navigationId).classList.add(HIDDEN_CLASS);
     });
-
-    
-
-    document.getElementById(navigationDropdownOptionsId).onmouseover = () => {
-
-    };
 }

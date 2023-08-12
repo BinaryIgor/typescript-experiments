@@ -145,7 +145,7 @@ export function navigationComponent(currentUser: string | null): string {
         ${PROPS.borderColorSecondary2} ${PROPS.bgColorPrimary} ${PROPS.txtColorSecondary2}`;
     
     if (!currentUser) {
-        navigationClasses += `${HIDDEN_CLASS}`;
+        navigationClasses += ` ${HIDDEN_CLASS}`;
     }
 
     //Id is used by index.js
@@ -154,14 +154,14 @@ export function navigationComponent(currentUser: string | null): string {
         hx-trigger="${TRIGGERS.showNavigation} from:body"
         hx-swap="outerHTML">
         <div class="text-2xl">${Translations.defaultLocale.appTitle}</div>
-        <div class="cursor-pointer text-xl text-right relative w-fit" 
+        <div id="app-navigation-dropdown" class="cursor-pointer text-xl text-right relative w-fit" 
             hx-post="${SIGN_OUT_ENDPOINT}"
             hx-trigger="click"
             hx-replace-url="${SIGN_IN_ENDPOINT}"
             hx-swap="innerHTML"
             hx-target="#${ROOT_ID}">
                 <div>${currentUser}</div>
-                <ul class="whitespace-nowrap absolute top-8 right-0 py-2 px-4 rounded-md shadow-md ${PROPS.bgColorSecondary2} ${PROPS.borderColorSecondary2}">
+                <ul class="${HIDDEN_CLASS} whitespace-nowrap absolute top-8 right-0 py-2 px-4 rounded-md shadow-md ${PROPS.bgColorSecondary2} ${PROPS.borderColorSecondary2}">
                     <li>
                         ${Translations.defaultLocale.navigation.profile}
                     </li>
