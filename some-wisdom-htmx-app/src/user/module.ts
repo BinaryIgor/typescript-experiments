@@ -9,6 +9,8 @@ import { OptionalErrorCode } from "../shared/errors";
 import { AuthSessions } from "../auth/auth";
 import * as AuthWeb from "../auth/web";
 
+const USER_ENDPOINT = "/user";
+const USER_PROFILE_ENDPOINT = "/user/profile";
 const SIGN_IN_ENDPOINT = "/user/sign-in";
 const SIGN_IN_EXECUTE_ENDPOINT = `${SIGN_IN_ENDPOINT}/execute`;
 const SIGN_IN_VALIDATE_NAME_ENDPOINT = `${SIGN_IN_ENDPOINT}/validate-name`;
@@ -87,8 +89,12 @@ export function build(authSessions: AuthSessions,
         returnSignInPage(req, res);
     }));
 
-    router.get("/user", (req: Request, res: Response) => {
-        Web.returnHtml(res, Views.navigationComponent(AuthWeb.currentUserName(req)));
+    router.get(USER_ENDPOINT, (req: Request, res: Response) => {
+        Web.returnHtml(res, Views.navigationComponent(AuthWeb.currentUserNameOrThrow(req)));
+    });
+
+    router.get(USER_PROFILE_ENDPOINT, (req: Request, res: Response) => {
+        Web.returnHtml(res, UserViews.profilePage(AuthWeb.currentUserNameOrThrow(req), Web.shouldReturnFullPage(req)));
     });
 
     return new UserModule(router, SIGN_IN_ENDPOINT,

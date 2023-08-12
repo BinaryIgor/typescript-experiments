@@ -7,6 +7,7 @@ const CONFIRMABLE_ELEMENT_LABEL = "data-confirmable-element";
 const SUBMIT_FORM_LABEL = "data-submit-form";
 const HIDDEN_CLASS = "hidden";
 const DISABLED_CLASS = "disabled";
+const HTMX_PUSH_URL_ATTRIBUTE = "hx-push-url";
 
 const HTMX_EVENTS = {
     configRequest: "htmx:configRequest",
@@ -17,7 +18,8 @@ const HTMX_EVENTS = {
 
 const TRIGGERS = {
     showNavigation: "show-navigation",
-    hideNavigation: "hide-navigation"
+    hideNavigation: "hide-navigation",
+    changeRoute: "change-route"
 };
 
 initErrorModal();
@@ -100,6 +102,7 @@ function initConfirmableModal() {
 }
 
 function initNavigation() {
+    //TODO: disable profile page if we are already there
     function findElementsAndInitNavigation() {
         const navigationDropdown = document.getElementById(navigationDropdownId);
         const navigationDropdownOptions = navigationDropdown.querySelector("ul");
@@ -155,10 +158,25 @@ function initEventListeners() {
     });
 
     document.addEventListener(HTMX_EVENTS.configRequest, e => {
-        e.detail.headers['Authentication'] = crypto.randomUUID();
+        console.log("Request...", e.detail);
+        // e.preventDefault();
     });
 
     document.addEventListener(TRIGGERS.hideNavigation, e => {
         document.getElementById(navigationId).classList.add(HIDDEN_CLASS);
     });
+}
+
+function pushRouteToHistoryIfNot(el,...routes) {
+    let pushUrl = true;
+    
+    for (let r of routes) {
+        if (location.pathname == r) {
+            pushUrl = false;
+            break;
+        }
+    }
+
+    el.setAttribute(HTMX_PUSH_URL_ATTRIBUTE, `${pushUrl}`);
+    el.dispatchEvent(new Event(TRIGGERS.changeRoute));
 }

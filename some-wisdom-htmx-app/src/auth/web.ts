@@ -53,3 +53,7 @@ export function currentUserOrThrow(req: any): AuthUser {
     }
     return user;
 }
+
+export function currentUserNameOrThrow(req: any): string {
+    return currentUserOrThrow(req).name;
+}

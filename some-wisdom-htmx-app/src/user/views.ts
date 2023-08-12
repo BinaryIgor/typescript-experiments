@@ -42,3 +42,8 @@ export function signInPage(signInEndpoint: string,
     </form>`;
     return renderFullPage ? Views.wrappedInMainPage(page, null) : page;
 }
+
+export function profilePage(currentUser: string,  renderFullPage: boolean): string {
+    const page =  `<div class="p-4">TODO: profile page for ${currentUser} user</div>`;
+    return renderFullPage ? Views.wrappedInMainPage(page, currentUser): page;
+}

@@ -17,12 +17,14 @@ export const DISABLED_CLASS = "disabled";
 
 export const TRIGGERS = {
     showNavigation: "show-navigation",
-    hideNavigation: "hide-navigation"
+    hideNavigation: "hide-navigation",
+    changeRoute: "change-route"
 };
 
 const GET_CURRENT_USER_ENDPOINT = "/user";
 const SIGN_IN_ENDPOINT = "/user/sign-in";
 const SIGN_OUT_ENDPOINT = "/user/sign-out";
+const PROFILE_ENDPOINT = "/user/profile";
 
 export const PROPS = {
     bgColorPrimary: "bg-indigo-950",
@@ -153,11 +155,22 @@ export function navigationComponent(currentUser: string | null): string {
         hx-get="${GET_CURRENT_USER_ENDPOINT}"
         hx-trigger="${TRIGGERS.showNavigation} from:body"
         hx-swap="outerHTML">
-        <div class="text-2xl">${Translations.defaultLocale.appTitle}</div>
+        <div class="text-2xl cursor-pointer"
+            hx-get="/"
+            hx-trigger="${TRIGGERS.changeRoute}"
+            hx-swap="innerHTML"
+            hx-target="#${ROOT_ID}"
+            onclick="${pushRouteToHistoryIfNotFunction('/', 'index.html')}">
+            ${Translations.defaultLocale.appTitle}
+        </div>
         <div id="app-navigation-dropdown" class="cursor-pointer text-xl text-right relative w-fit">
                 <div>${currentUser}</div>
                 <ul class="${HIDDEN_CLASS} whitespace-nowrap absolute top-8 right-0 py-2 px-4 rounded-md shadow-md ${PROPS.bgColorSecondary2} ${PROPS.borderColorSecondary2}">
-                    <li>
+                    <li hx-get="${PROFILE_ENDPOINT}"
+                        hx-trigger="${TRIGGERS.changeRoute}"
+                        hx-swap="innerHTML"
+                        hx-target="#${ROOT_ID}"
+                        onclick="${pushRouteToHistoryIfNotFunction(PROFILE_ENDPOINT)}">
                         ${Translations.defaultLocale.navigation.profile}
                     </li>
                     <li hx-post="${SIGN_OUT_ENDPOINT}"
@@ -170,6 +183,11 @@ export function navigationComponent(currentUser: string | null): string {
                 </ul>
             </div>
     </div>`;
+}
+
+export function pushRouteToHistoryIfNotFunction(...routes: string[]): string {
+    const routesArgs = routes.map(e => `'${e}'`).join(", ");
+    return `pushRouteToHistoryIfNot(this, ${routesArgs})`;
 }
 
 function confirmableModal(): string {
