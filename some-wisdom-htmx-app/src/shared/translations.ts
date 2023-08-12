@@ -6,6 +6,10 @@ const en = {
         passwordPlaceholder: "Your password...",
         signInButton: "Sign In"
     },
+    navigation: {
+        profile: "Profile",
+        signOut: "Sign Out"
+    },
     errors: {
         INVALID_USER_NAME: "Name should have 3 - 30 characters",
         INVALID_USER_PASSWORD: "Password should have 8 - 50 characters",

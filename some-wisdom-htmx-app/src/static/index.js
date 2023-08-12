@@ -1,6 +1,7 @@
 console.log("Loading index js...");
 
 const navigationId = "app-navigation";
+const navigationDropdownOptionsId = "app-navigation-dropdown-options";
 const FORM_LABEL = "data-form";
 const CONFIRMABLE_ELEMENT_LABEL = "data-confirmable-element";
 const SUBMIT_FORM_LABEL = "data-submit-form";
@@ -140,4 +141,10 @@ function initEventListeners() {
     document.addEventListener(TRIGGERS.hideNavigation, e => {
         document.getElementById(navigationId).classList.add(HIDDEN_CLASS);
     });
+
+    
+
+    document.getElementById(navigationDropdownOptionsId).onmouseover = () => {
+
+    };
 }

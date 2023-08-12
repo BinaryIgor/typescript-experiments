@@ -33,6 +33,7 @@ export const PROPS = {
     bgColorSecondary2: "bg-indigo-800",
     txtColorBtn: "text-zinc-100",
     bgColorBtn: "bg-indigo-600",
+    borderColorPrimary: "border-indigo-950",
     borderColorSecondary1: "border-indigo-900",
     borderColorSecondary2: "border-indigo-800",
     placeholderColor: "placeholder-zinc-500"
@@ -141,7 +142,7 @@ export function errorModal(): string {
 
 export function navigationComponent(currentUser: string | null): string {
     let navigationClasses = `z-50 sticky flex justify-between top-0 w-full py-4 px-2 border-b-2  
-        ${PROPS.borderColorSecondary2} ${PROPS.bgColorPrimary}`;
+        ${PROPS.borderColorSecondary2} ${PROPS.bgColorPrimary} ${PROPS.txtColorSecondary2}`;
     
     if (!currentUser) {
         navigationClasses += `${HIDDEN_CLASS}`;
@@ -152,13 +153,23 @@ export function navigationComponent(currentUser: string | null): string {
         hx-get="${GET_CURRENT_USER_ENDPOINT}"
         hx-trigger="${TRIGGERS.showNavigation} from:body"
         hx-swap="outerHTML">
-        <div class="text-2xl ${PROPS.txtColorSecondary2}">${Translations.defaultLocale.appTitle}</div>
-        <div class="cursor-pointer" 
+        <div class="text-2xl">${Translations.defaultLocale.appTitle}</div>
+        <div class="cursor-pointer text-xl text-right relative w-fit" 
             hx-post="${SIGN_OUT_ENDPOINT}"
             hx-trigger="click"
             hx-replace-url="${SIGN_IN_ENDPOINT}"
             hx-swap="innerHTML"
-            hx-target="#${ROOT_ID}">Say Cya!</div>
+            hx-target="#${ROOT_ID}">
+                <div>${currentUser}</div>
+                <ul class="whitespace-nowrap absolute top-8 right-0 py-2 px-4 rounded-md shadow-md ${PROPS.bgColorSecondary2} ${PROPS.borderColorSecondary2}">
+                    <li>
+                        ${Translations.defaultLocale.navigation.profile}
+                    </li>
+                    <li>
+                        ${Translations.defaultLocale.navigation.signOut}
+                    </li>
+                </ul>
+            </div>
     </div>`;
 }
 
