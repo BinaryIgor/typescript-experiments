@@ -28,17 +28,21 @@
 .load-indicator {
   height: 0;
   visibility: hidden;
+  overflow: hidden;
   opacity: 0;
-  transition: visibility 0ms, opacity 500ms ease-in;
+  padding: 0;
+  transition: visibility 250ms, opacity 500ms ease-in;
 }
 
 .htmx-request .load-indicator {
+  padding: inherit;
   height: auto;
   visibility: visible;
   opacity: 1
 }
 
 .htmx-request.load-indicator {
+  padding: inherit;
   height: auto;
   visibility: visible;
   opacity: 1

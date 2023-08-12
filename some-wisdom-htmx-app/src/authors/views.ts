@@ -29,10 +29,10 @@ export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: stri
             hx-post="${searchAuthorsEndpoint}" 
             hx-target="#${searchResultsId}"
             hx-indicator="#search-results-indicator">
-        <div id="search-results-indicator" class="load-indicator p-4 rounded-md text-xl shadow-md">
+        <div id="search-results-indicator" class="load-indicator rounded-md text-xl shadow-md">
             ${homePageTranslations.searchLoader}
         </div>
-        <div id="${searchResultsId}"></div>
+        <div class="mt-2" id="${searchResultsId}"></div>
     </div>
     </div>`
     return renderFullPage ? Views.wrappedInMainPage(page, currentUser) : page;
@@ -40,11 +40,21 @@ export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: stri
 
 export function authorsSearchResult(result: Author[], authorEndpoint: Function): string {
     const resultList = result.map(a =>
-        `<div class="shadow-md p-4 cursor-pointer" hx-target="#${Views.ROOT_ID}" hx-get="${authorEndpoint(a)}" hx-push-url="true">
+        `<div class="rounded-lg shadow py-2 px-4 cursor-pointer border-2 text-xl 
+            ${Views.PROPS.borderColorSecondary2} ${Views.PROPS.shadowColorSecondary2}"
+        hx-target="#${Views.ROOT_ID}" hx-get="${authorEndpoint(a)}" hx-push-url="true">
             ${a.name}
         </div>`)
         .join('\n');
-    return `<div class="space-y-4">${resultList}</div>`
+
+    let results;
+    if (resultList) {
+        results = resultList;
+    } else {
+        results = `<div class="px-4">${Translations.defaultLocale.homePage.noAuthors}</div>`;
+    }
+
+    return `<div class="space-y-2">${results}</div>`
 }
 
 export function authorPage(author: Author, quoteEndpoint: (quoteId: number) => string,

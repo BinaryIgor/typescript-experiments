@@ -46,7 +46,9 @@ export const PROPS = {
     hoverBgColorSecondary2: "hover:bg-indigo-800",
     hoverTxtColorPrimary: "hover:text-zinc-200",
     hoverTxtColorSecondary1: "hover:text-zinc-300",
-    hoverTxtColorSecondary2: "hover:text-zinc-400"
+    hoverTxtColorSecondary2: "hover:text-zinc-400",
+    shadowColorSecondary1: "shadow-indigo-900",
+    shadowColorSecondary2: "shadow-indigo-800",
 };
 
 export const BUTTON_LIKE_CLASSES = `rounded-lg ${PROPS.bgColorBtn} ${PROPS.txtColorBtn} 

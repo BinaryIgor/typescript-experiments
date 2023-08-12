@@ -14,7 +14,8 @@ const en = {
         header: "What authors you are looking for?",
         suggestion: "If in doubt, some suggestions:",
         searchPlaceholder: "Search for interesting authors by their name...",
-        searchLoader: "Searching..."
+        searchLoader: "Searching...",
+        noAuthors: "There are no authors maching your query, try something else!"
     },
     errors: {
         INVALID_USER_NAME: "Name should have 3 - 30 characters",
