@@ -79,16 +79,20 @@ function authorsSearchResultElement(author: AuthorWithRandomQuote, authorEndpoin
 export function authorPage(author: Author, quoteEndpoint: (quoteId: number) => string,
     renderFullPage: boolean, currentUser: string | null): string {
     const quotes = author.quotes.map(q => `
-        <div class="shadow-md p-4 cursor-pointer"
+        <div class="rounded-lg shadow p-8 cursor-pointer border-2 
+        ${Views.PROPS.borderColorSecondary1} ${Views.PROPS.shadowColorSecondary2} 
+        ${Views.PROPS.txtColorSecondary1}
+        italic text-lg"
             hx-push-url="true" hx-target="#${Views.ROOT_ID}" hx-get="${quoteEndpoint(q.id)}">
             "${q.content}"
         </div>`)
         .join('\n');
 
-    const page = `<div class="m-2">
-        <h1 class="text-xl">${author.name}</h1>
-        <div class="p-2">${author.note}</div>
-        <h1 class="text-lg">Quotes (${author.quotes.length})</h1>
+    const page = `<div class="p-4">
+        <h1 class="text-2xl">${author.name}</h1>
+        <div class="p-4 my-4 rounded-md shadow-md ${Views.PROPS.shadowColorSecondary2} w-full
+            ${Views.PROPS.bgColorSecondary1} ${Views.PROPS.txtColorSecondary1}">${author.note}</div>
+        <h1 class="text-xl mt-8 mb-4">Quotes (${author.quotes.length})</h1>
         <div class="space-y-4">
             ${quotes}
         </div>
