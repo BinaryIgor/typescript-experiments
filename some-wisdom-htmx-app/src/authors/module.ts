@@ -24,11 +24,11 @@ export function build(quoteEndpoint: (quoteId: number) => string): AuthorModule 
 
         const foundAuthors = authorRepository.search(query);
 
-        //Slow it down, for demonstration purposes
+        //Slow it down a little, for demonstration purposes
         setTimeout(() => Web.returnHtml(res,
             AuthorViews.authorsSearchResult(authorService.authorsWithRandomQuotes(foundAuthors),
                 (aName: string) => `${AUTHORS_ENDPOINT}/${aName}`)),
-            1000);
+            500);
     });
 
     router.get(`${AUTHORS_ENDPOINT}/:name`, (req: Request, res: Response) => {

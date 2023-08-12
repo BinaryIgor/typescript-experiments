@@ -13,6 +13,7 @@ export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: stri
     const authorsList = suggestedAuthors.map(a => `<li class="ml-4">${a}</li>`).join("\n");
 
     const searchResultsId = "search-results";
+    const searchAuthorsInputId = "search-authors-input";
 
     const page = `<h1 class="m-2 text-xl">${homePageTranslations.header}</h1>
 
@@ -24,12 +25,21 @@ export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: stri
     </div>
 
     <div class="w-full p-2">
-        <input class="${Views.INPUT_LIKE_CLASSES} w-full" name="${AUTHORS_SEARCH_INPUT}" 
-            placeholder="${homePageTranslations.searchPlaceholder}"
-            hx-trigger="keyup changed delay:500ms" 
-            hx-post="${searchAuthorsEndpoint}" 
-            hx-target="#${searchResultsId}"
-            hx-indicator="#search-results-indicator">
+        <div class="relative">
+            <input id="${searchAuthorsInputId}" 
+                class="${Views.INPUT_LIKE_CLASSES} w-full" name="${AUTHORS_SEARCH_INPUT}" 
+                placeholder="${homePageTranslations.searchPlaceholder}"
+                hx-trigger="keyup changed delay:500ms" 
+                hx-post="${searchAuthorsEndpoint}" 
+                hx-target="#${searchResultsId}"
+                hx-indicator="#search-results-indicator">
+            <div class="text-2xl absolute top-2 right-2 cursor-pointer" 
+                hx-post="${searchAuthorsEndpoint}" 
+                hx-target="#${searchResultsId}"
+                hx-include="#${searchAuthorsInputId}"
+                hx-indicator="#search-results-indicator"
+                hx-trigger="click">&#8635;</div>
+        </div>
         <div id="search-results-indicator" class="load-indicator rounded-md text-xl shadow-md">
             ${homePageTranslations.searchLoader}
         </div>
