@@ -3,7 +3,7 @@ import * as Web from "../shared/web";
 import * as Views from "../shared/views";
 import * as AuthorViews from "./views";
 import { InMemoryAuthorRepository, InMemoryQuoteRepository } from "./repository";
-import { Author, Quote } from "./domain";
+import { Author, AuthorService, Quote } from "./domain";
 import * as AuthWeb from "../auth/web";
 
 const SEARCH_AUTHORS_ENDPOINT = "/search-authors";
@@ -13,6 +13,8 @@ export function build(quoteEndpoint: (quoteId: number) => string): AuthorModule 
     const quoteRepository = new InMemoryQuoteRepository();
     const authorRepository = new InMemoryAuthorRepository(quoteRepository);
 
+    const authorService = new AuthorService();
+
     const router = Router();
 
     router.post(SEARCH_AUTHORS_ENDPOINT, (req: Request, res: Response) => {
@@ -21,11 +23,11 @@ export function build(quoteEndpoint: (quoteId: number) => string): AuthorModule 
         const query = req.body[Views.AUTHORS_SEARCH_INPUT];
 
         const foundAuthors = authorRepository.search(query);
-        //TODO: search quotes!
 
         //Slow it down, for demonstration purposes
         setTimeout(() => Web.returnHtml(res,
-            AuthorViews.authorsSearchResult(foundAuthors, (a: Author) => `${AUTHORS_ENDPOINT}/${a.name}`)),
+            AuthorViews.authorsSearchResult(authorService.authorsWithRandomQuotes(foundAuthors),
+                (aName: string) => `${AUTHORS_ENDPOINT}/${aName}`)),
             1000);
     });
 

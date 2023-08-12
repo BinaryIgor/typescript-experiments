@@ -1,3 +1,4 @@
+import { randomNumber } from "../shared/utils";
 import { Author, AuthorRepository, Quote, QuoteRepository } from "./domain";
 
 export class InMemoryAuthorRepository implements AuthorRepository {
@@ -34,14 +35,10 @@ export class InMemoryAuthorRepository implements AuthorRepository {
         }
 
         const maxStartIdx = this.authors.length - size;
-        const startIdx = randomNumber(maxStartIdx);
+        const startIdx = randomNumber(0, maxStartIdx);
 
         return this.authors.slice(startIdx, startIdx + size);
     }
-}
-
-function randomNumber(max: number): number {
-    return Math.round(Math.random() * max);
 }
 
 export class InMemoryQuoteRepository implements QuoteRepository {

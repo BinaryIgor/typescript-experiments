@@ -1,8 +1,9 @@
 import { Translations } from "../shared/translations";
 import * as Views from "../shared/views";
-import { Author } from "./domain";
+import { Author, AuthorWithRandomQuote } from "./domain";
 
 export const AUTHORS_SEARCH_INPUT = "authors-search";
+const AUTHOR_QUOTE_PREVIEW_MAX_LENGTH = 300;
 
 export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: string,
     renderFullPage: boolean,
@@ -10,7 +11,7 @@ export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: stri
     const homePageTranslations = Translations.defaultLocale.homePage;
 
     const authorsList = suggestedAuthors.map(a => `<li class="ml-4">${a}</li>`).join("\n");
-    
+
     const searchResultsId = "search-results";
 
     const page = `<h1 class="m-2 text-xl">${homePageTranslations.header}</h1>
@@ -38,14 +39,8 @@ export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: stri
     return renderFullPage ? Views.wrappedInMainPage(page, currentUser) : page;
 }
 
-export function authorsSearchResult(result: Author[], authorEndpoint: Function): string {
-    const resultList = result.map(a =>
-        `<div class="rounded-lg shadow py-2 px-4 cursor-pointer border-2 text-xl 
-            ${Views.PROPS.borderColorSecondary2} ${Views.PROPS.shadowColorSecondary2}"
-        hx-target="#${Views.ROOT_ID}" hx-get="${authorEndpoint(a)}" hx-push-url="true">
-            ${a.name}
-        </div>`)
-        .join('\n');
+export function authorsSearchResult(result: AuthorWithRandomQuote[], authorEndpoint: (name: string) => string): string {
+    const resultList = result.map(a => authorsSearchResultElement(a, authorEndpoint(a.name))).join('\n');
 
     let results;
     if (resultList) {
@@ -55,6 +50,20 @@ export function authorsSearchResult(result: Author[], authorEndpoint: Function):
     }
 
     return `<div class="space-y-2">${results}</div>`
+}
+
+function authorsSearchResultElement(author: AuthorWithRandomQuote, authorEndpoint: string): string {
+    let quotePreview = author.quote.content;
+    if (quotePreview.length > AUTHOR_QUOTE_PREVIEW_MAX_LENGTH) {
+        quotePreview = `${quotePreview.substring(0, AUTHOR_QUOTE_PREVIEW_MAX_LENGTH)}...`;
+    }
+
+    return `<div class="rounded-lg shadow-md p-4 cursor-pointer border-2 
+        ${Views.PROPS.borderColorSecondary2} ${Views.PROPS.shadowColorSecondary2}"
+    hx-target="#${Views.ROOT_ID}" hx-get="${authorEndpoint}" hx-push-url="true">
+        <div class="text-xl">${author.name}</div>
+        <div class="${Views.PROPS.txtColorSecondary1} italic mt-2">"${quotePreview}"</div>
+    </div>`
 }
 
 export function authorPage(author: Author, quoteEndpoint: (quoteId: number) => string,
