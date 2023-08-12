@@ -29,9 +29,10 @@ export function quotePage(params: {
 
     const confirmQuoteNoteMessage = "Are you sure that you want to add this note?";
 
-    const page = `<div class="shadow-md p-6">
+    const page = Views.wrappendInCenteredDiv(`<div class="py-16 px-8 w-full ${Views.PROPS.bgColorSecondary1} italic
+        shadow-md rounded-b-xl ${Views.PROPS.shadowColorSecondary1}">
         <p class="text-2xl">"${params.quote}"</p>
-        <p class="text-xl font-bold text-right">${params.author}</p>
+        <p class="text-xl font-bold text-right ${Views.PROPS.txtColorSecondary1} mt-8">${params.author}</p>
     </div>
         <div class="p-4">
             <div class="flex justify-between">
@@ -62,7 +63,7 @@ export function quotePage(params: {
             addNoteForm.classList.toggle("${Views.HIDDEN_CLASS}");
         };
     `)}
-    `;
+    `);
 
     return params.renderFullPage ? Views.wrappedInMainPage(page, params.currentUser) : page;
 }

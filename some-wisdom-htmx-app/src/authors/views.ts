@@ -10,12 +10,12 @@ export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: stri
     currentUser: string | null): string {
     const homePageTranslations = Translations.defaultLocale.homePage;
 
-    const authorsList = suggestedAuthors.map(a => `<li class="ml-4">${a}</li>`).join("\n");
+    const authorsList = suggestedAuthors.map(a => `<li class="ml-4 font-medium">${a}</li>`).join("\n");
 
     const searchResultsId = "search-results";
     const searchAuthorsInputId = "search-authors-input";
 
-    const page = `<h1 class="m-2 text-xl">${homePageTranslations.header}</h1>
+    const page = Views.wrappendInToLeftDiv(`<h1 class="m-2 text-xl">${homePageTranslations.header}</h1>
 
     <div class="m-4">
         ${homePageTranslations.suggestion}
@@ -45,7 +45,7 @@ export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: stri
         </div>
         <div class="mt-2" id="${searchResultsId}"></div>
     </div>
-    </div>`
+    </div>`);
     return renderFullPage ? Views.wrappedInMainPage(page, currentUser) : page;
 }
 
@@ -81,14 +81,13 @@ export function authorPage(author: Author, quoteEndpoint: (quoteId: number) => s
     const quotes = author.quotes.map(q => `
         <div class="rounded-lg shadow p-8 cursor-pointer border-2 
         ${Views.PROPS.borderColorSecondary1} ${Views.PROPS.shadowColorSecondary2} 
-        ${Views.PROPS.txtColorSecondary1}
         italic text-lg"
             hx-push-url="true" hx-target="#${Views.ROOT_ID}" hx-get="${quoteEndpoint(q.id)}">
             "${q.content}"
         </div>`)
         .join('\n');
 
-    const page = `<div class="p-4">
+    const page = Views.wrappendInToLeftDiv(`<div class="p-4">
         <h1 class="text-2xl">${author.name}</h1>
         <div class="p-4 my-4 rounded-md shadow-md ${Views.PROPS.shadowColorSecondary2} w-full
             ${Views.PROPS.bgColorSecondary1} ${Views.PROPS.txtColorSecondary1}">${author.note}</div>
@@ -97,7 +96,7 @@ export function authorPage(author: Author, quoteEndpoint: (quoteId: number) => s
             ${quotes}
         </div>
     </div>
-    `;
+    `);
 
     return renderFullPage ? Views.wrappedInMainPage(page, currentUser) : page;
 }

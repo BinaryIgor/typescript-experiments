@@ -84,6 +84,15 @@ export function wrappedInMainPage(html: string, currentUser: string | null): str
     </html>`;
 }
 
+export function wrappendInCenteredDiv(html: string): string {
+    return `<div class="lg:px-40 xl:px-60 2xl:px-90">${html}</div>`
+}
+
+export function wrappendInToLeftDiv(html: string): string {
+    return `<div class="lg:pr-60 xl:pr-90 2xl:pr-[30rem]">${html}</div>`
+}
+
+
 export function inputWithHiddenError(props: {
     name: string,
     placeholder: string,

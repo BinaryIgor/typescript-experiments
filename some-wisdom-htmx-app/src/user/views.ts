@@ -36,7 +36,7 @@ export function signInPage(signInEndpoint: string,
         hx-replace-url="/">
         ${nameInput}
         ${passwordInput}
-        <input class="w-full px-8 py-4 ${Views.DISABLED_CLASS} ${Views.BUTTON_LIKE_CLASSES}" 
+        <input class="w-full py-4 ${Views.DISABLED_CLASS} ${Views.BUTTON_LIKE_CLASSES}" 
             type="submit" value="${Translations.defaultLocale.signInPage.signInButton}"
         ${Views.SUBMIT_FORM_LABEL}="${SIGN_FORM_LABEL}" disabled>
     </form>`;
