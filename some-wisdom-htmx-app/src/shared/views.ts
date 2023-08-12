@@ -154,18 +154,17 @@ export function navigationComponent(currentUser: string | null): string {
         hx-trigger="${TRIGGERS.showNavigation} from:body"
         hx-swap="outerHTML">
         <div class="text-2xl">${Translations.defaultLocale.appTitle}</div>
-        <div id="app-navigation-dropdown" class="cursor-pointer text-xl text-right relative w-fit" 
-            hx-post="${SIGN_OUT_ENDPOINT}"
-            hx-trigger="click"
-            hx-replace-url="${SIGN_IN_ENDPOINT}"
-            hx-swap="innerHTML"
-            hx-target="#${ROOT_ID}">
+        <div id="app-navigation-dropdown" class="cursor-pointer text-xl text-right relative w-fit">
                 <div>${currentUser}</div>
                 <ul class="${HIDDEN_CLASS} whitespace-nowrap absolute top-8 right-0 py-2 px-4 rounded-md shadow-md ${PROPS.bgColorSecondary2} ${PROPS.borderColorSecondary2}">
                     <li>
                         ${Translations.defaultLocale.navigation.profile}
                     </li>
-                    <li>
+                    <li hx-post="${SIGN_OUT_ENDPOINT}"
+                        hx-trigger="click"
+                        hx-replace-url="${SIGN_IN_ENDPOINT}"
+                        hx-swap="innerHTML"
+                        hx-target="#${ROOT_ID}">
                         ${Translations.defaultLocale.navigation.signOut}
                     </li>
                 </ul>

@@ -11,10 +11,12 @@ const DISABLED_CLASS = "disabled";
 const HTMX_EVENTS = {
     configRequest: "htmx:configRequest",
     afterRequest: "htmx:afterRequest",
-    confirm: "htmx:confirm"
+    confirm: "htmx:confirm",
+    afterSwap: "htmx:afterSwap"
 };
 
 const TRIGGERS = {
+    showNavigation: "show-navigation",
     hideNavigation: "hide-navigation"
 };
 
@@ -48,7 +50,7 @@ function initConfirmableModal() {
     const confirmableModal = document.getElementById("confirmable-modal");
     const confirmableModalContent = document.getElementById("confirmable-modal-content");
     let confirmableEvent = null;
-    
+
     function isModalShown() {
         return !confirmableModal.classList.contains(HIDDEN_CLASS);
     }
@@ -98,9 +100,20 @@ function initConfirmableModal() {
 }
 
 function initNavigation() {
-    document.getElementById(navigationDropdownId).onmouseover = () => {
-        console.log("On mouse over!");
-    };
+    function findElementsAndInitNavigation() {
+        const navigationDropdown = document.getElementById(navigationDropdownId);
+        const navigationDropdownOptions = navigationDropdown.querySelector("ul");
+        navigationDropdown.onclick = () =>  navigationDropdownOptions.classList.toggle(HIDDEN_CLASS);
+    }
+
+    findElementsAndInitNavigation();
+
+    document.addEventListener(HTMX_EVENTS.afterSwap, e => {
+        console.log("After swap...", e.target.id);
+        if (e.target.id == navigationId) {
+            findElementsAndInitNavigation();
+        }
+    });
 }
 
 function initEventListeners() {
