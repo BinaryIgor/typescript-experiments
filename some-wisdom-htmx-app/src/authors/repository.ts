@@ -36,12 +36,12 @@ export class InMemoryAuthorRepository implements AuthorRepository {
         const maxStartIdx = this.authors.length - size;
         const startIdx = randomNumber(maxStartIdx);
 
-        return this.authors.slice(startIdx, size);
+        return this.authors.slice(startIdx, startIdx + size);
     }
 }
 
 function randomNumber(max: number): number {
-    return Math.floor(Math.random() * max);
+    return Math.round(Math.random() * max);
 }
 
 export class InMemoryQuoteRepository implements QuoteRepository {
