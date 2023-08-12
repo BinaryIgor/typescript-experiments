@@ -28,18 +28,34 @@ const PROFILE_ENDPOINT = "/user/profile";
 
 export const PROPS = {
     bgColorPrimary: "bg-indigo-950",
-    txtColorPrimary: "text-zinc-200",
-    txtColorSecondary: "text-zinc-200",
-    txtColorSecondary2: "text-zinc-400",
     bgColorSecondary1: "bg-indigo-900",
     bgColorSecondary2: "bg-indigo-800",
+    txtColorPrimary: "text-zinc-200",
+    txtColorSecondary1: "text-zinc-300",
+    txtColorSecondary2: "text-zinc-400",
     txtColorBtn: "text-zinc-100",
     bgColorBtn: "bg-indigo-600",
+    hoverTxtColorBtn: "hover:text-zinc-200",
+    hoverBgColorBtn: "hover:bg-indigo-700",
     borderColorPrimary: "border-indigo-950",
     borderColorSecondary1: "border-indigo-900",
     borderColorSecondary2: "border-indigo-800",
-    placeholderColor: "placeholder-zinc-500"
+    placeholderColor: "placeholder-zinc-500",
+    hoverBgColorPrimary: "hover:bg-indigo-950",
+    hoverBgColorSecondary1: "hover:bg-indigo-900",
+    hoverBgColorSecondary2: "hover:bg-indigo-800",
+    hoverTxtColorPrimary: "hover:text-zinc-200",
+    hoverTxtColorSecondary1: "hover:text-zinc-300",
+    hoverTxtColorSecondary2: "hover:text-zinc-400"
 };
+
+export const BUTTON_LIKE_CLASSES = `rounded-lg ${PROPS.bgColorBtn} ${PROPS.txtColorBtn} 
+    ${PROPS.hoverBgColorBtn} ${PROPS.hoverTxtColorBtn}`;
+
+export const INPUT_LIKE_CLASSES = `p-2 rounded-md ${PROPS.bgColorSecondary1} shadow-md mb-2 
+    border-2 ${PROPS.borderColorSecondary2} 
+    ${PROPS.hoverBgColorSecondary2} focus:outline-none
+    ${PROPS.placeholderColor}`;
 
 export function wrappedInMainPage(html: string, currentUser: string | null): string {
     return `<!DOCTYPE html>
@@ -75,10 +91,7 @@ export function inputWithHiddenError(props: {
     errorClasses?: string
 }): string {
 
-    let inputClasess = `p-2 rounded-md ${PROPS.bgColorSecondary1} shadow-md mb-2 
-        border-2 ${PROPS.borderColorSecondary2} 
-        hover:${PROPS.bgColorSecondary2} focus:${PROPS.bgColorSecondary2} focus:outline-none
-        ${PROPS.placeholderColor}`;
+    let inputClasess = INPUT_LIKE_CLASSES;
 
     if (props.inputClasess) {
         inputClasess += ` ${props.inputClasess}`
@@ -143,12 +156,14 @@ export function errorModal(): string {
 }
 
 export function navigationComponent(currentUser: string | null): string {
-    let navigationClasses = `z-50 sticky flex justify-between top-0 w-full py-4 px-2 border-b-2  
+    let navigationClasses = `z-50 sticky flex justify-between top-0 w-full py-4 px-2 border-b-4  
         ${PROPS.borderColorSecondary2} ${PROPS.bgColorPrimary} ${PROPS.txtColorSecondary2}`;
     
     if (!currentUser) {
         navigationClasses += ` ${HIDDEN_CLASS}`;
     }
+
+    const dropDownElementClasses = `${PROPS.hoverBgColorPrimary} ${PROPS.hoverTxtColorPrimary} py-2 px-4`;
 
     //Id is used by index.js
     return `<div id="app-navigation" class="${navigationClasses}"
@@ -165,15 +180,18 @@ export function navigationComponent(currentUser: string | null): string {
         </div>
         <div id="app-navigation-dropdown" class="cursor-pointer text-xl text-right relative w-fit">
                 <div>${currentUser}</div>
-                <ul class="${HIDDEN_CLASS} whitespace-nowrap absolute top-8 right-0 py-2 px-4 rounded-md shadow-md ${PROPS.bgColorSecondary2} ${PROPS.borderColorSecondary2}">
-                    <li hx-get="${PROFILE_ENDPOINT}"
+                <ul class="${HIDDEN_CLASS} whitespace-nowrap absolute top-8 right-0 rounded-md shadow-md 
+                    ${PROPS.bgColorSecondary2} ${PROPS.borderColorSecondary2}">
+                    <li class="${dropDownElementClasses}"
+                        hx-get="${PROFILE_ENDPOINT}"
                         hx-trigger="${TRIGGERS.changeRoute}"
                         hx-swap="innerHTML"
                         hx-target="#${ROOT_ID}"
                         onclick="${pushRouteToHistoryIfNotFunction(PROFILE_ENDPOINT)}">
                         ${Translations.defaultLocale.navigation.profile}
                     </li>
-                    <li hx-post="${SIGN_OUT_ENDPOINT}"
+                    <li class="${dropDownElementClasses}"
+                        hx-post="${SIGN_OUT_ENDPOINT}"
                         hx-trigger="click"
                         hx-replace-url="${SIGN_IN_ENDPOINT}"
                         hx-swap="innerHTML"

@@ -1,3 +1,4 @@
+import { Translations } from "../shared/translations";
 import * as Views from "../shared/views";
 import { Author } from "./domain";
 
@@ -6,32 +7,32 @@ export const AUTHORS_SEARCH_INPUT = "authors-search";
 export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: string,
     renderFullPage: boolean,
     currentUser: string | null): string {
-    const authorsList = suggestedAuthors.map(a => `<li class="ml-4">${a}</li>`).join("\n");
-    const page = `<h1 class="m-1 text-xl">
-        Some authors ought to be there...
-    </h1>
+    const homePageTranslations = Translations.defaultLocale.homePage;
 
-    <div class="m-2">
-        If in doubt, some sugestions:
+    const authorsList = suggestedAuthors.map(a => `<li class="ml-4">${a}</li>`).join("\n");
+    
+    const searchResultsId = "search-results";
+
+    const page = `<h1 class="m-2 text-xl">${homePageTranslations.header}</h1>
+
+    <div class="m-4">
+        ${homePageTranslations.suggestion}
         <ul class="m-2 list-disc">
             ${authorsList}
         </ul>
     </div>
 
     <div class="w-full p-2">
-        <input class="w-full p-1" name="${AUTHORS_SEARCH_INPUT}" 
-            placeholder="Search for interesting authors by their name or content from quotes..."
+        <input class="${Views.INPUT_LIKE_CLASSES} w-full" name="${AUTHORS_SEARCH_INPUT}" 
+            placeholder="${homePageTranslations.searchPlaceholder}"
             hx-trigger="keyup changed delay:500ms" 
             hx-post="${searchAuthorsEndpoint}" 
-            hx-target="#search-results"
+            hx-target="#${searchResultsId}"
             hx-indicator="#search-results-indicator">
-        <!--button class="w-full text-white bg-black p-1 mt-1 text-lg" 
-            hx-post="${searchAuthorsEndpoint}" hx-target="#search-results"
-            hx-include="[name='${AUTHORS_SEARCH_INPUT}']">Search</button-->
-        <div id="search-results-indicator" class="load-indicator">
-            Loading results...
+        <div id="search-results-indicator" class="load-indicator p-4 rounded-md text-xl shadow-md">
+            ${homePageTranslations.searchLoader}
         </div>
-        <div id="search-results"></div>
+        <div id="${searchResultsId}"></div>
     </div>
     </div>`
     return renderFullPage ? Views.wrappedInMainPage(page, currentUser) : page;
