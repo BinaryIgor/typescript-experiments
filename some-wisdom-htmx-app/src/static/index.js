@@ -13,13 +13,20 @@ const HTMX_EVENTS = {
     configRequest: "htmx:configRequest",
     afterRequest: "htmx:afterRequest",
     confirm: "htmx:confirm",
-    afterSwap: "htmx:afterSwap"
+    afterSwap: "htmx:afterSwap",
+    historyRestored: "htmx:historyCacheMissLoad"
 };
 
 const TRIGGERS = {
     showNavigation: "show-navigation",
     hideNavigation: "hide-navigation",
-    changeRoute: "change-route"
+    changeRoute: "change-route",
+    saveScrollPositionRoute: "save-scroll-position-route"
+};
+
+const scrollPositions = {
+    restorablePaths: ["/authors"],
+    positions: new Map()    
 };
 
 initErrorModal();
@@ -106,13 +113,12 @@ function initNavigation() {
     function findElementsAndInitNavigation() {
         const navigationDropdown = document.getElementById(navigationDropdownId);
         const navigationDropdownOptions = navigationDropdown.querySelector("ul");
-        navigationDropdown.onclick = () =>  navigationDropdownOptions.classList.toggle(HIDDEN_CLASS);
+        navigationDropdown.onclick = () => navigationDropdownOptions.classList.toggle(HIDDEN_CLASS);
     }
 
     findElementsAndInitNavigation();
 
-    document.addEventListener(HTMX_EVENTS.afterSwap, e => {
-        console.log("After swap...", e.target.id);
+    addEventListener(HTMX_EVENTS.afterSwap, e => {
         if (e.target.id == navigationId) {
             findElementsAndInitNavigation();
         }
@@ -121,10 +127,10 @@ function initNavigation() {
 
 function initEventListeners() {
     window.addEventListener("popstate", e => {
-        console.log("Popping state!", e);
+        console.log("Popping state!", e, "url:", location.pathname);
     });
     window.addEventListener("htmx:pushedIntoHistory", e => {
-        console.log("Element pushed into history", e);
+        console.log("Element pushed into history", e, "url", location.pathname);
     });
 
     window.addEventListener("form-validated", e => {
@@ -157,19 +163,47 @@ function initEventListeners() {
         }
     });
 
-    document.addEventListener(HTMX_EVENTS.configRequest, e => {
+    window.addEventListener(HTMX_EVENTS.configRequest, e => {
         console.log("Request...", e.detail);
         // e.preventDefault();
     });
 
-    document.addEventListener(TRIGGERS.hideNavigation, e => {
+    addEventListener(TRIGGERS.hideNavigation, e => {
         document.getElementById(navigationId).classList.add(HIDDEN_CLASS);
     });
+
+    document.addEventListener("scroll", (e) => {
+        if (window.scrollY == 0) {
+            return;
+        }
+        const currentPath = location.pathname;
+        for (let r of scrollPositions.restorablePaths) {
+            if (currentPath.startsWith(r)) {
+                scrollPositions.positions.set(currentPath, window.scrollY);
+                break;
+            }
+        }
+    });
+
+    window.addEventListener(HTMX_EVENTS.historyRestored, e => {
+        console.log("History restored!", e.detail);
+        const scroll = scrollPositions.positions.get(location.pathname);
+        if (scroll && scroll > 0) {
+            //TODO: why timeout is needed?
+            setTimeout(() => {
+                window.scrollTo({
+                    top: scroll,
+                    left: 0
+                });
+                scrollPositions.positions.delete(location.pathname);
+            }, 0);
+        }
+    })
 }
 
-function pushRouteToHistoryIfNot(el,...routes) {
+function pushRouteToHistoryIfNot(el, ...routes) {
     let pushUrl = true;
-    
+
     for (let r of routes) {
         if (location.pathname == r) {
             pushUrl = false;

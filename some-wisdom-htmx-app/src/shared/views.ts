@@ -18,7 +18,8 @@ export const DISABLED_CLASS = "disabled";
 export const TRIGGERS = {
     showNavigation: "show-navigation",
     hideNavigation: "hide-navigation",
-    changeRoute: "change-route"
+    changeRoute: "change-route",
+    saveScrollPositionRoute: "save-scroll-position-route"
 };
 
 const GET_CURRENT_USER_ENDPOINT = "/user";
