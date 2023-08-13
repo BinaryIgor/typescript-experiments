@@ -90,7 +90,8 @@ export function authorPage(author: Author, quoteEndpoint: (quoteId: number) => s
     const page = Views.wrappendInToLeftDiv(`<div class="p-4">
         <h1 class="text-2xl">${author.name}</h1>
         <div class="p-4 my-4 rounded-md shadow-md ${Views.PROPS.shadowColorSecondary2} w-full
-            ${Views.PROPS.bgColorSecondary1} ${Views.PROPS.txtColorSecondary1}">${author.note}</div>
+            ${Views.PROPS.bgColorSecondary1} ${Views.PROPS.txtColorSecondary1} 
+            whitespace-pre-line">${author.note}</div>
         <h1 class="text-xl mt-8 mb-4">Quotes (${author.quotes.length})</h1>
         <div class="space-y-4">
             ${quotes}

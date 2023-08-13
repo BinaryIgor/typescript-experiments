@@ -5,7 +5,7 @@ import { AuthorClient } from "./authors/module";
 
 class AuthorToImport {
     constructor(readonly name: string,
-        readonly note: string,
+        readonly note: string[],
         readonly quotes: string[]) { }
 }
 
@@ -25,7 +25,7 @@ export function importAuthors(dbJson: string, client: AuthorClient) {
             return quote;
         });
 
-        client.create(new Author(toImport.name, toImport.note, quotes));
+        client.create(new Author(toImport.name, toImport.note.join(""), quotes));
     }
 }
 
