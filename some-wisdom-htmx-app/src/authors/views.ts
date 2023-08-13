@@ -92,7 +92,7 @@ export function authorPage(author: Author, quoteEndpoint: (quoteId: number) => s
         <div class="p-4 my-4 rounded-md shadow-md ${Views.PROPS.shadowColorSecondary2} w-full
             ${Views.PROPS.bgColorSecondary1} ${Views.PROPS.txtColorSecondary1} 
             whitespace-pre-line">${author.note}</div>
-        <h1 class="text-xl mt-8 mb-4">Quotes (${author.quotes.length})</h1>
+        <h1 class="text-xl mt-8 mb-4">${Translations.defaultLocale.authorPage.quotes} (${author.quotes.length})</h1>
         <div class="space-y-4">
             ${quotes}
         </div>

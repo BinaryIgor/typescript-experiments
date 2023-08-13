@@ -1,3 +1,4 @@
+import { Translations } from "../shared/translations";
 import * as Views from "../shared/views";
 
 export const TRIGGERS = {
@@ -27,7 +28,7 @@ export function quotePage(params: {
     const addNoteFormSubmitId = "add-note-form-submit";
     const notesListId = "notes-list";
 
-    const confirmQuoteNoteMessage = "Are you sure that you want to add this note?";
+    const pageTranslations = Translations.defaultLocale.quotePage;
 
     const page = Views.wrappendInCenteredDiv(`<div class="py-16 px-8 w-full ${Views.PROPS.bgColorSecondary1} italic
         shadow-md rounded-b-xl ${Views.PROPS.shadowColorSecondary1}">
@@ -45,7 +46,7 @@ export function quotePage(params: {
                 hx-post="${params.addQuoteNoteEndpoint}"
                 hx-target="#${notesListId}"
                 ${Views.FORM_LABEL}="${LABELS.quoteNoteForm}"
-                ${Views.CONFIRMABLE_ELEMENT_LABEL}="${confirmQuoteNoteMessage}">
+                ${Views.CONFIRMABLE_ELEMENT_LABEL}="${pageTranslations.confirmAddQuoteNote}">
                 ${Views.textAreaWithHiddenError('note', 'Your note...', params.validateQuoteNoteEndpoint)}
                 <input id="${addNoteFormSubmitId}" class="absolute bottom-0 right-0 p-4 ${Views.DISABLED_CLASS}"
                     type="submit" value="Add"

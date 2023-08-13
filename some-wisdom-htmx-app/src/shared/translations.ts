@@ -17,6 +17,13 @@ const en = {
         searchLoader: "Searching...",
         noAuthors: "There are no authors maching your query, try something else!"
     },
+    authorPage: {
+        quotes: "Quotes"
+    },
+    quotePage: {
+        confirmAddQuoteNote: "Are you sure that you want to add this note?",
+        notes: "Notes"
+    },
     errors: {
         INVALID_USER_NAME: "Name should have 3 - 30 characters",
         INVALID_USER_PASSWORD: "Password should have 8 - 50 characters",

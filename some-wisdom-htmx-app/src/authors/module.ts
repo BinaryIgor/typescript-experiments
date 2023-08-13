@@ -38,8 +38,7 @@ export function build(quoteEndpoint: (quoteId: number) => string): AuthorModule 
         const author = authorRepository.ofName(name);
         if (author) {
             Web.returnHtml(res, AuthorViews.authorPage(author, quoteEndpoint,
-                Web.shouldReturnFullPage(req), AuthWeb.currentUserName(req)),
-                Views.TRIGGERS.saveScrollPositionRoute);
+                Web.shouldReturnFullPage(req), AuthWeb.currentUserName(req)));
         } else {
             Web.returnNotFound(res);
         }

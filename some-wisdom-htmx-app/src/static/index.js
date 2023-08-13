@@ -14,19 +14,19 @@ const HTMX_EVENTS = {
     afterRequest: "htmx:afterRequest",
     confirm: "htmx:confirm",
     afterSwap: "htmx:afterSwap",
-    historyRestored: "htmx:historyCacheMissLoad"
+    historyRestored: "htmx:historyCacheMissLoad",
+    load: "htmx:load"
 };
 
 const TRIGGERS = {
     showNavigation: "show-navigation",
     hideNavigation: "hide-navigation",
-    changeRoute: "change-route",
-    saveScrollPositionRoute: "save-scroll-position-route"
+    changeRoute: "change-route"
 };
 
 const scrollPositions = {
     restorablePaths: ["/authors"],
-    positions: new Map()    
+    positions: new Map()
 };
 
 initErrorModal();
@@ -172,33 +172,49 @@ function initEventListeners() {
         document.getElementById(navigationId).classList.add(HIDDEN_CLASS);
     });
 
-    document.addEventListener("scroll", (e) => {
+    let lastPath = null;
+    let restorablePath = false;
+    document.addEventListener("scroll", () => {
         if (window.scrollY == 0) {
             return;
         }
         const currentPath = location.pathname;
+        
+        if (currentPath == lastPath && restorablePath) {
+            scrollPositions.positions.set(currentPath, window.scrollY);
+            return;
+        }
+
+        lastPath = currentPath;
+        restorablePath = false;
+        
         for (let r of scrollPositions.restorablePaths) {
             if (currentPath.startsWith(r)) {
                 scrollPositions.positions.set(currentPath, window.scrollY);
+                restorablePath = true;
                 break;
             }
         }
     });
 
-    window.addEventListener(HTMX_EVENTS.historyRestored, e => {
-        console.log("History restored!", e.detail);
-        const scroll = scrollPositions.positions.get(location.pathname);
-        if (scroll && scroll > 0) {
-            //TODO: why timeout is needed?
-            setTimeout(() => {
+    let historyRestored = false;
+    window.addEventListener(HTMX_EVENTS.historyRestored, () => historyRestored = true);
+    window.addEventListener(HTMX_EVENTS.load, () => {
+        if (historyRestored) {
+            const savedScroll = scrollPositions.positions.get(location.pathname);
+            
+            if (savedScroll && savedScroll > 0) {
                 window.scrollTo({
-                    top: scroll,
+                    top: savedScroll,
                     left: 0
                 });
-                scrollPositions.positions.delete(location.pathname);
-            }, 0);
+            }
+
+            scrollPositions.positions.delete(location.pathname);
+
+            historyRestored = false;
         }
-    })
+    });
 }
 
 function pushRouteToHistoryIfNot(el, ...routes) {
