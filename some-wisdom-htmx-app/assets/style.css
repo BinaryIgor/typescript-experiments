@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --text-color-primary: #e4e4e7;
+}
+
 /* Semantics for combining classes! */
 @layer components {
   .error-message {

@@ -25,7 +25,7 @@ if (!fs.existsSync(sessionsDir)) {
 const authSessions = new AuthSessions(sessionsDir, sessionDuration, 60 * 1000);
 const sessionCookies = new SessionCookies(sessionDuration, "session-id", false);
 
-const dbPath = path.join(__dirname, "static", "db");
+const dbPath = path.join(__dirname, "..", "assets", "db");
 const quoteNotesDbPath = path.join(dbPath, "__quote-notes.json");
 
 const authorsModule = AuthorsModule.build(QuotesModule.quoteEndpoint);
@@ -41,7 +41,8 @@ staticFileContentOfPath(path.join(dbPath, "users.json"))
     .then(db => FilesDb.importUsers(db, userModule.client))
     .catch(e => console.log("Failed to load users db!", e));
 
-const STATIC_ASSETS_PATH = path.join(__dirname, "static");
+//TODO: minification
+const STATIC_ASSETS_PATH = path.join(__dirname, "..", "assets");
 
 const STYLES_PATH = function () {
     const stylesPath = process.env.STYLES_PATH;

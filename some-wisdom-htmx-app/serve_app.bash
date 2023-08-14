@@ -3,10 +3,10 @@ logs_output="/tmp"
 tailwind_logs_output="$logs_output/tailwind.txt"
 app_logs_output="$logs_output/some-wisdom-app.txt"
 
-export STYLES_PATH="${PWD}/dist/static/style.css" 
+export STYLES_PATH="${PWD}/dist/assets/style.css" 
 
 echo "Starting live-reloading tailwind styles, logging to $tailwind_logs_output..."
-nohup npx tailwindcss -i ./src/static/style.css -o ./dist/static/style.css --watch=always > $tailwind_logs_output &
+nohup npx tailwindcss -i ./assets/style.css -o ./dist/assets/style.css --watch=always > $tailwind_logs_output &
 tailwind_pid=$!
 
 echo "Starting live-reloading some-wisdom app, logging to $app_logs_output..."
