@@ -22,7 +22,9 @@ const en = {
     },
     quotePage: {
         confirmAddQuoteNote: "Are you sure that you want to add this note?",
-        notes: "Notes"
+        notes: "Notes",
+        addQuote: "Add",
+        notePlaceholder: "Your note..."
     },
     errors: {
         INVALID_USER_NAME: "Name should have 3 - 30 characters",

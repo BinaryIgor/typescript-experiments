@@ -59,6 +59,9 @@ export const INPUT_LIKE_CLASSES = `p-2 rounded-md ${PROPS.bgColorSecondary1} sha
     ${PROPS.hoverBgColorSecondary2} focus:outline-none
     ${PROPS.placeholderColor}`;
 
+const ERROR_MESSAGE_CLASS = "error-message";
+const HX_ERROR_MESSAGE_TARGET = `next .${ERROR_MESSAGE_CLASS}`;
+
 export function wrappedInMainPage(html: string, currentUser: string | null): string {
     return `<!DOCTYPE html>
     <html lang="en">
@@ -111,17 +114,23 @@ export function inputWithHiddenError(props: {
     return `<input name="${props.name}" placeholder="${props.placeholder}" type="${props.type ?? 'text'}" 
         class="${inputClasess}"
         hx-trigger="keyup changed delay:500ms"
-        hx-target="next .error-message"
+        hx-target="${HX_ERROR_MESSAGE_TARGET}"
         hx-swap="outerHTML"
         hx-post="${props.validateEndpoint}">
     ${inputErrorIf(null, props.errorClasses)}`
 }
 
-export function textAreaWithHiddenError(name: string, placeholder: string, validateEndpoint: string): string {
-    return `<textarea name="${name}" placeholder="${placeholder}" 
-        class="h-24 w-9/12 resize-none"
+export function textAreaWithHiddenError(name: string, placeholder: string, validateEndpoint: string,
+    textAreaClasess?: string): string {
+    let actualTextAreaClasses = `h-24 w-full resize-none ${INPUT_LIKE_CLASSES}`;
+
+    if (textAreaClasess) {
+        actualTextAreaClasses += ` ${textAreaClasess}`;
+    }
+
+    return `<textarea name="${name}" placeholder="${placeholder}" class="${actualTextAreaClasses}"
         hx-trigger="keyup changed delay:500ms"
-        hx-target="next .error-message"
+        hx-target="${HX_ERROR_MESSAGE_TARGET}"
         hx-swap="outerHTML"
         hx-post="${validateEndpoint}"></textarea>
     ${inputErrorIf()}`
@@ -138,7 +147,7 @@ function translatedError(error: ErrorCode): string {
 
 export function inputErrorIf(error: OptionalErrorCode = null, additionalClasses?: string): string {
     const translated = error ? translatedError(error) : "";
-    let classes = `error-message ${translated ? 'active' : 'inactive'}`;
+    let classes = `${ERROR_MESSAGE_CLASS} ${translated ? 'active' : 'inactive'}`;
     if (additionalClasses) {
         classes += ` ${additionalClasses}`;
     }

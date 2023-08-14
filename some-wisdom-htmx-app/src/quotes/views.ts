@@ -35,22 +35,26 @@ export function quotePage(params: {
         <p class="text-2xl">"${params.quote}"</p>
         <p class="text-xl font-bold text-right ${Views.PROPS.txtColorSecondary1} mt-8">${params.author}</p>
     </div>
-        <div class="p-4">
-            <div class="flex justify-between">
-                <p hx-get="${params.getQuotesNotesSummaryEndpoint}" hx-trigger="${TRIGGERS.getNotesSummary} from:body">
+        <div>
+            <div class="flex justify-between py-4">
+                <p class="text-xl mt-4 mb-4 ml-4" hx-get="${params.getQuotesNotesSummaryEndpoint}" hx-trigger="${TRIGGERS.getNotesSummary} from:body">
                     ${quoteNotesSummaryComponent(params.notes.length)}
                 </p>
-                <button id="${addNoteButtonId}">Add</button>
+                <button class="${Views.BUTTON_LIKE_CLASSES} px-12" id="${addNoteButtonId}">${pageTranslations.addQuote}</button>
             </div>
-            <form id="${addNoteFormId}" class="p-4 shadow-md relative ${Views.HIDDEN_CLASS}"
+            <form id="${addNoteFormId}" class="py-4 shadow-md ${Views.HIDDEN_CLASS}"
                 hx-post="${params.addQuoteNoteEndpoint}"
                 hx-target="#${notesListId}"
                 ${Views.FORM_LABEL}="${LABELS.quoteNoteForm}"
                 ${Views.CONFIRMABLE_ELEMENT_LABEL}="${pageTranslations.confirmAddQuoteNote}">
-                ${Views.textAreaWithHiddenError('note', 'Your note...', params.validateQuoteNoteEndpoint)}
-                <input id="${addNoteFormSubmitId}" class="absolute bottom-0 right-0 p-4 ${Views.DISABLED_CLASS}"
-                    type="submit" value="Add"
-                    ${Views.SUBMIT_FORM_LABEL}="${LABELS.quoteNoteForm}" disabled>
+                ${Views.textAreaWithHiddenError('note', pageTranslations.notePlaceholder, 
+                    params.validateQuoteNoteEndpoint)}
+                <div class="flex justify-end">
+                    <input id="${addNoteFormSubmitId}" 
+                        class="${Views.BUTTON_LIKE_CLASSES} py-4 px-12 ${Views.DISABLED_CLASS}"
+                        type="submit" value="${pageTranslations.addQuote}"
+                        ${Views.SUBMIT_FORM_LABEL}="${LABELS.quoteNoteForm}" disabled>
+                </div>
             </form>
             ${quoteNotesPage(params.notes, params.deletableNoteIds, params.deleteQuoteNoteEndpoint)}
             </div>
