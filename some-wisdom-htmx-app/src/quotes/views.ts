@@ -30,7 +30,7 @@ export function quotePage(params: {
 
     const pageTranslations = Translations.defaultLocale.quotePage;
 
-    const page = Views.wrappendInCenteredDiv(`<div class="py-16 px-8 w-full ${Views.PROPS.bgColorSecondary1} italic
+    const page = Views.wrappedInCenteredDiv(`<div class="py-16 px-8 w-full ${Views.PROPS.bgColorSecondary1} italic
         shadow-md rounded-b-xl ${Views.PROPS.shadowColorSecondary1}">
         <p class="text-2xl">"${params.quote}"</p>
         <p class="text-xl font-bold text-right ${Views.PROPS.txtColorSecondary1} mt-8">${params.author}</p>

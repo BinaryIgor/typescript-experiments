@@ -38,7 +38,7 @@ export function signInPage(signInEndpoint: string,
         ${passwordInput}
         <input class="w-full py-4 ${Views.DISABLED_CLASS} ${Views.BUTTON_LIKE_CLASSES}" 
             type="submit" value="${Translations.defaultLocale.signInPage.signInButton}"
-        ${Views.SUBMIT_FORM_LABEL}="${SIGN_FORM_LABEL}" disabled>
+        ${Views.SUBMIT_FORM_LABEL}="${SIGN_FORM_LABEL}" ${Views.DISABLED_CLASS}>
     </form>`;
     return renderFullPage ? Views.wrappedInMainPage(page, null) : page;
 }

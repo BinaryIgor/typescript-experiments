@@ -43,13 +43,11 @@ function initErrorModal() {
     };
 
     document.addEventListener("htmx:responseError", e => {
-        console.log("Response error!", e);
         errorModalContent.innerHTML = e.detail.xhr.response;
         errorModal.classList.toggle(HIDDEN_CLASS);
     });
 
     document.addEventListener("htmx:sendError", e => {
-        console.log("Send error!", e);
         errorModalContent.innerHTML = "Server unavailable";
         errorModal.classList.toggle(HIDDEN_CLASS);
     });

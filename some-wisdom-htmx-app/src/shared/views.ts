@@ -35,7 +35,7 @@ export const PROPS = {
     txtColorSecondary2: "text-zinc-400",
     txtColorBtn: "text-zinc-100",
     bgColorBtn: "bg-indigo-600",
-    hoverTxtColorBtn: "hover:text-zinc-200",
+    hoverTxtColorBtn: "hover:text-zinc-300",
     hoverBgColorBtn: "hover:bg-indigo-700",
     borderColorPrimary: "border-indigo-950",
     borderColorSecondary1: "border-indigo-900",
@@ -62,6 +62,8 @@ export const INPUT_LIKE_CLASSES = `p-2 rounded-md ${PROPS.bgColorSecondary1} sha
 const ERROR_MESSAGE_CLASS = "error-message";
 const HX_ERROR_MESSAGE_TARGET = `next .${ERROR_MESSAGE_CLASS}`;
 
+const CLOSE_ICON = "&times;";
+
 export function wrappedInMainPage(html: string, currentUser: string | null): string {
     return `<!DOCTYPE html>
     <html lang="en">
@@ -87,11 +89,11 @@ export function wrappedInMainPage(html: string, currentUser: string | null): str
     </html>`;
 }
 
-export function wrappendInCenteredDiv(html: string): string {
+export function wrappedInCenteredDiv(html: string): string {
     return `<div class="lg:px-40 xl:px-60 2xl:px-90">${html}</div>`
 }
 
-export function wrappendInToLeftDiv(html: string): string {
+export function wrappedInToLeftDiv(html: string): string {
     return `<div class="lg:pr-60 xl:pr-90 2xl:pr-[30rem]">${html}</div>`
 }
 
@@ -137,7 +139,8 @@ export function textAreaWithHiddenError(name: string, placeholder: string, valid
 }
 
 export function errorsComponent(errors: ErrorCode[]): string {
-    return errors.map(e => `<p>${translatedError(e)}</p>`).join('\n');
+    const errorsHtml = errors.map(e => `<p class="text-red-600 text-lg">${translatedError(e)}</p>`).join('\n');
+    return `<div class="space-y-2 pb-4">${errorsHtml}</div>`;
 }
 
 function translatedError(error: ErrorCode): string {
@@ -167,9 +170,11 @@ export function inlineJs(js: string, scoped: boolean = true): string {
 }
 
 export function errorModal(): string {
-    return `<div class="modal ${HIDDEN_CLASS}" id="error-modal">
-        <div class="modal-content">
-            <span id="error-modal-close" class="close">&times;</span>
+    return `<div class="modal ${HIDDEN_CLASS} fixed w-full h-full z-10 pt-16 bg-black/50" 
+        id="error-modal">
+        <div class="w-11/12 md:w-8/12 xl:w-6/12 p-4 m-auto ${PROPS.bgColorSecondary1} relative rounded-lg">
+            <span id="error-modal-close" class="text-4xl absolute top-0 right-2
+                ${PROPS.hoverTxtColorSecondary2} cursor-pointer">${CLOSE_ICON}</span>
             <div id="error-modal-content"></div>
         </div>
     </div>`;
@@ -242,7 +247,7 @@ function confirmableModal(): string {
 //TODO: style it!
 export function errorPage(errors: ErrorCode[], renderFullPage: boolean, currentUser: string | null): string {
     const page = `<div>
-        <h1 class="m-1 text-xl">Something went wrong...</h1>
+        <h1 class="text-2xl mt-2 mb-6">${Translations.defaultLocale.errorsModal.header}</h1>
         ${errorsComponent(errors)}
     </div>`;
     return renderFullPage ? wrappedInMainPage(page, currentUser) : page;

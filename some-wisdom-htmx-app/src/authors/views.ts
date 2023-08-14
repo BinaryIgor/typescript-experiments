@@ -15,7 +15,7 @@ export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: stri
     const searchResultsId = "search-results";
     const searchAuthorsInputId = "search-authors-input";
 
-    const page = Views.wrappendInToLeftDiv(`<h1 class="m-2 text-xl">${homePageTranslations.header}</h1>
+    const page = Views.wrappedInToLeftDiv(`<h1 class="m-2 text-xl">${homePageTranslations.header}</h1>
 
     <div class="m-4">
         ${homePageTranslations.suggestion}
@@ -87,7 +87,7 @@ export function authorPage(author: Author, quoteEndpoint: (quoteId: number) => s
         </div>`)
         .join('\n');
 
-    const page = Views.wrappendInToLeftDiv(`<div class="p-4">
+    const page = Views.wrappedInToLeftDiv(`<div class="p-4">
         <h1 class="text-2xl">${author.name}</h1>
         <div class="p-4 my-4 rounded-md shadow-md ${Views.PROPS.shadowColorSecondary2} w-full
             ${Views.PROPS.bgColorSecondary1} ${Views.PROPS.txtColorSecondary1} 
