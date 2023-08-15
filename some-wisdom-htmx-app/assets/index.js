@@ -118,11 +118,16 @@ function initConfirmableModal() {
 }
 
 function initNavigation() {
-    //TODO: disable profile page if we are already there
+    let navigationDropdown;
+    let navigationDropdownOptions;
+
     function findElementsAndInitNavigation() {
-        const navigationDropdown = document.getElementById(navigationDropdownId);
-        const navigationDropdownOptions = navigationDropdown.querySelector("ul");
-        navigationDropdown.onclick = () => navigationDropdownOptions.classList.toggle(HIDDEN_CLASS);
+        navigationDropdown = document.getElementById(navigationDropdownId);
+        navigationDropdownOptions = navigationDropdown.querySelector("ul");
+        navigationDropdown.onclick = e => {
+            e.stopPropagation();
+            navigationDropdownOptions.classList.toggle(HIDDEN_CLASS);
+        }
     }
 
     findElementsAndInitNavigation();
@@ -130,6 +135,12 @@ function initNavigation() {
     addEventListener(HTMX_EVENTS.afterSwap, e => {
         if (e.target.id == navigationId) {
             findElementsAndInitNavigation();
+        }
+    });
+
+    document.addEventListener("click", () => {
+        if (navigationDropdownOptions && !navigationDropdownOptions.classList.contains(HIDDEN_CLASS)) {
+            navigationDropdownOptions.classList.add(HIDDEN_CLASS);
         }
     });
 }
