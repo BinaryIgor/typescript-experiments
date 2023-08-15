@@ -46,7 +46,8 @@ export function quotePage(params: {
                 hx-post="${params.addQuoteNoteEndpoint}"
                 hx-target="#${notesListId}"
                 ${Views.FORM_LABEL}="${LABELS.quoteNoteForm}"
-                ${Views.CONFIRMABLE_ELEMENT_LABEL}="${pageTranslations.confirmAddQuoteNote}">
+                ${Views.CONFIRMABLE_ELEMENT_TITLE_LABEL}="${pageTranslations.confirmAddQuoteNoteTitle}"
+                ${Views.CONFIRMABLE_ELEMENT_CONTENT_LABEL}="${pageTranslations.confirmAddQuoteNoteContent}">
                 ${Views.textAreaWithHiddenError('note', pageTranslations.notePlaceholder, 
                     params.validateQuoteNoteEndpoint)}
                 <div class="flex justify-end">
@@ -92,7 +93,7 @@ export function quoteNotesPage(quoteNotes: QuoteNoteView[],
                    hx-swap="delete"
                    hx-target="#${noteElementId}"
                    hx-delete="${deleteQuoteNoteEndpoint(qn.noteId)}"
-                   ${Views.CONFIRMABLE_ELEMENT_LABEL}="${confirmQuoteNoteDeleteMessage}">&times</span>`;
+                   ${Views.CONFIRMABLE_ELEMENT_CONTENT_LABEL}="${confirmQuoteNoteDeleteMessage}">&times</span>`;
                 } else {
                     deleteEl = "";
                 }

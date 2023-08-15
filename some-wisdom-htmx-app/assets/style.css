@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  --text-color-primary: #e4e4e7;
+  --txt-color-primary: #e4e4e7;
 }
 
 /* Semantics for combining classes! */
@@ -11,10 +11,6 @@
   .error-message {
     @apply text-red-700 text-sm transition-transform origin-left duration-150 ease-in-out;
   }
-
-  /* .error-border {
-    @apply border-red-500 focus: border-red-500;
-  } */
 
   .error-message.inactive {
     @apply h-0 scale-0 m-0 p-0;
@@ -52,13 +48,6 @@
   opacity: 1
 }
 
-.close:hover,
-.close:focus {
-  color: #000;
-  text-decoration: none;
-  cursor: pointer;
-}
-
 input:-webkit-autofill,
 input:-webkit-autofill:hover, 
 input:-webkit-autofill:focus,
@@ -69,7 +58,7 @@ select:-webkit-autofill,
 select:-webkit-autofill:hover,
 select:-webkit-autofill:focus {
   /* border: 1px solid inherit; */
-  -webkit-text-fill-color: var(--text-color-primary);
+  -webkit-text-fill-color: var(--txt-color-primary);
   -webkit-box-shadow: 0 0 0px 0px;
   transition: background-color 5000s ease-in-out 0s;
 }

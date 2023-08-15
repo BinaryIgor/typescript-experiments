@@ -9,7 +9,8 @@ const STYLE_SRC = "/style.css";
 const INDEX_JS_SRC = "/index.js";
 
 export const FORM_LABEL = "data-form";
-export const CONFIRMABLE_ELEMENT_LABEL = "data-confirmable-element";
+export const CONFIRMABLE_ELEMENT_TITLE_LABEL = "data-confirmable-element-title";
+export const CONFIRMABLE_ELEMENT_CONTENT_LABEL = "data-confirmable-element-content";
 export const SUBMIT_FORM_LABEL = "data-submit-form";
 
 export const HIDDEN_CLASS = "hidden";
@@ -64,6 +65,10 @@ const HX_ERROR_MESSAGE_TARGET = `next .${ERROR_MESSAGE_CLASS}`;
 
 const CLOSE_ICON = "&times;";
 
+const MODAL_CLASSES = "fixed w-full h-full z-50 pt-32 bg-black/60";
+const MODAL_CONTENT_CLASSES = `w-11/12 md:w-8/12 xl:w-6/12 p-4 m-auto ${PROPS.bgColorSecondary1}
+    relative rounded-lg`;
+
 export function wrappedInMainPage(html: string, currentUser: string | null): string {
     return `<!DOCTYPE html>
     <html lang="en">
@@ -75,9 +80,9 @@ export function wrappedInMainPage(html: string, currentUser: string | null): str
         <link rel="stylesheet" href="${STYLE_SRC}"/>
       </head>
       <body class="${PROPS.bgColorPrimary} ${PROPS.txtColorPrimary}">
-        ${navigationComponent(currentUser)}
         ${confirmableModal()}
         ${errorModal()}
+        ${navigationComponent(currentUser)}
         
         <div hx-history="false" id="${ROOT_ID}" hx-history-elt>
             ${html}
@@ -169,19 +174,38 @@ export function inlineJs(js: string, scoped: boolean = true): string {
     return `<script type="module">${js}</script>`
 }
 
+function confirmableModal(): string {
+    return `<div class="${HIDDEN_CLASS} ${MODAL_CLASSES}" id="confirmable-modal">
+        <div class="${MODAL_CONTENT_CLASSES}">
+            ${closeModalIconElement("confirmable-modal-close")}
+            <div class="text-2xl font-medium" id="confirmable-modal-title">Confirm</div>
+            <div class="text-lg pt-4 pb-12" id="confirmable-modal-content"></div>
+            <span id="confirmable-modal-cancel" 
+                class="absolute bottom-0 left-0 p-4 cursor-pointer font-medium text-xl">
+                    ${Translations.defaultLocale.confirmableModal.cancel}</span>
+            <span id="confirmable-modal-ok" 
+                class="absolute bottom-0 right-0 p-4 cursor-pointer font-medium text-xl">
+                ${Translations.defaultLocale.confirmableModal.ok}</span>
+        </div>
+    </div>`;
+}
+
+function closeModalIconElement(id: string): string {
+    return `<span id="${id}" class="text-4xl absolute top-0 right-2
+        ${PROPS.hoverTxtColorSecondary2} cursor-pointer">${CLOSE_ICON}</span>`;
+}
+
 export function errorModal(): string {
-    return `<div class="modal ${HIDDEN_CLASS} fixed w-full h-full z-10 pt-16 bg-black/50" 
-        id="error-modal">
-        <div class="w-11/12 md:w-8/12 xl:w-6/12 p-4 m-auto ${PROPS.bgColorSecondary1} relative rounded-lg">
-            <span id="error-modal-close" class="text-4xl absolute top-0 right-2
-                ${PROPS.hoverTxtColorSecondary2} cursor-pointer">${CLOSE_ICON}</span>
+    return `<div class="${HIDDEN_CLASS} ${MODAL_CLASSES}" id="error-modal">
+        <div class="${MODAL_CONTENT_CLASSES}">
+            ${closeModalIconElement("error-modal-close")}
             <div id="error-modal-content"></div>
         </div>
     </div>`;
 }
 
 export function navigationComponent(currentUser: string | null): string {
-    let navigationClasses = `z-50 sticky flex justify-between top-0 w-full py-4 px-2 border-b-4  
+    let navigationClasses = `z-10 sticky flex justify-between top-0 w-full py-4 px-2 border-b-4  
         ${PROPS.borderColorSecondary2} ${PROPS.bgColorPrimary} ${PROPS.txtColorSecondary2}`;
     
     if (!currentUser) {
@@ -233,21 +257,10 @@ export function pushRouteToHistoryIfNotFunction(...routes: string[]): string {
     return `pushRouteToHistoryIfNot(this, ${routesArgs})`;
 }
 
-function confirmableModal(): string {
-    return `<div class="modal ${HIDDEN_CLASS}" id="confirmable-modal">
-        <div class="modal-content relative">
-            <span id="confirmable-modal-close" class="close">&times;</span>
-            <div class="p-4 mb-4" id="confirmable-modal-content"></div>
-            <span id="confirmable-modal-cancel" class="absolute bottom-0 left-0 p-4 cursor-pointer">Cancel</span>
-            <span id="confirmable-modal-ok" class="absolute bottom-0 right-0 p-4 cursor-pointer">Ok</span>
-        </div>
-    </div>`;
-}
-
 //TODO: style it!
 export function errorPage(errors: ErrorCode[], renderFullPage: boolean, currentUser: string | null): string {
     const page = `<div>
-        <h1 class="text-2xl mt-2 mb-6">${Translations.defaultLocale.errorsModal.header}</h1>
+        <h1 class="text-2xl mt-2 mb-6 font-medium">${Translations.defaultLocale.errorsModal.header}</h1>
         ${errorsComponent(errors)}
     </div>`;
     return renderFullPage ? wrappedInMainPage(page, currentUser) : page;

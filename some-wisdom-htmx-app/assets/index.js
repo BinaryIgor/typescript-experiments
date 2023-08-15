@@ -3,7 +3,8 @@ console.log("Loading index js...");
 const navigationId = "app-navigation";
 const navigationDropdownId = "app-navigation-dropdown";
 const FORM_LABEL = "data-form";
-const CONFIRMABLE_ELEMENT_LABEL = "data-confirmable-element";
+const CONFIRMABLE_ELEMENT_TITLE_LABEL = "data-confirmable-element-title";
+const CONFIRMABLE_ELEMENT_CONTENT_LABEL = "data-confirmable-element-content";
 const SUBMIT_FORM_LABEL = "data-submit-form";
 const HIDDEN_CLASS = "hidden";
 const DISABLED_CLASS = "disabled";
@@ -29,8 +30,8 @@ const scrollPositions = {
     positions: new Map()
 };
 
-initErrorModal();
 initConfirmableModal();
+initErrorModal();
 initNavigation();
 initEventListeners();
 
@@ -55,6 +56,7 @@ function initErrorModal() {
 
 function initConfirmableModal() {
     const confirmableModal = document.getElementById("confirmable-modal");
+    const confirmableModalTitle = document.getElementById("confirmable-modal-title");
     const confirmableModalContent = document.getElementById("confirmable-modal-content");
     let confirmableEvent = null;
 
@@ -70,7 +72,7 @@ function initConfirmableModal() {
         confirmableModal.classList.remove(HIDDEN_CLASS);
     }
 
-    document.getElementById("confirmable-modal-cancel").onclick = () => {
+    document.getElementById("confirmable-modal-cancel").onclick = e => {
         e.stopPropagation();
         hideModal();
     };
@@ -85,16 +87,25 @@ function initConfirmableModal() {
 
     document.getElementById("confirmable-modal-close").onclick = () => {
         confirmableModal.classList.toggle(HIDDEN_CLASS);
-        confirmableModal.classList.contains(HIDDEN_CLASS);
     };
 
     document.addEventListener(HTMX_EVENTS.confirm, e => {
         const sourceElement = e.detail.elt;
-        const confirmableMessage = sourceElement.getAttribute(CONFIRMABLE_ELEMENT_LABEL);
-        if (confirmableMessage) {
+        const confirmableTitleMessage = sourceElement.getAttribute(CONFIRMABLE_ELEMENT_TITLE_LABEL);
+        const confirmableContentMessage = sourceElement.getAttribute(CONFIRMABLE_ELEMENT_CONTENT_LABEL);
+        
+        if (confirmableTitleMessage || confirmableContentMessage) {
             e.preventDefault();
+
             confirmableEvent = e;
-            confirmableModalContent.innerHTML = confirmableMessage;
+            
+            if (confirmableTitleMessage) {
+                confirmableModalTitle.innerHTML = confirmableTitleMessage;
+            }
+            if (confirmableContentMessage) {
+                confirmableModalContent.innerHTML = confirmableContentMessage;
+            }
+
             showModal();
         }
     });
@@ -177,7 +188,7 @@ function initEventListeners() {
             return;
         }
         const currentPath = location.pathname;
-        
+
         if (currentPath == lastPath && restorablePath) {
             scrollPositions.positions.set(currentPath, window.scrollY);
             return;
@@ -185,7 +196,7 @@ function initEventListeners() {
 
         lastPath = currentPath;
         restorablePath = false;
-        
+
         for (let r of scrollPositions.restorablePaths) {
             if (currentPath.startsWith(r)) {
                 scrollPositions.positions.set(currentPath, window.scrollY);
@@ -200,7 +211,7 @@ function initEventListeners() {
     window.addEventListener(HTMX_EVENTS.load, () => {
         if (historyRestored) {
             const savedScroll = scrollPositions.positions.get(location.pathname);
-            
+
             if (savedScroll && savedScroll > 0) {
                 window.scrollTo({
                     top: savedScroll,

@@ -21,10 +21,15 @@ const en = {
         quotes: "Quotes"
     },
     quotePage: {
-        confirmAddQuoteNote: "Are you sure that you want to add this note?",
+        confirmAddQuoteNoteTitle: "Quote note confirmation",
+        confirmAddQuoteNoteContent: "Are you sure that you want to add this note to the quote?",
         notes: "Notes",
         addQuote: "Add",
         notePlaceholder: "Your note..."
+    },
+    confirmableModal: {
+        cancel: "Cancel",
+        ok: "Ok"
     },
     errorsModal: {
         header: "Something went wrong..."
