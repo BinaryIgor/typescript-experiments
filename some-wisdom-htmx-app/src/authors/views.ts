@@ -5,6 +5,8 @@ import { Author, AuthorWithRandomQuote } from "./domain";
 export const AUTHORS_SEARCH_INPUT = "authors-search";
 const AUTHOR_QUOTE_PREVIEW_MAX_LENGTH = 300;
 
+const REFRESH_ICON = "&#8635;";
+
 export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: string,
     renderFullPage: boolean,
     currentUser: string | null): string {
@@ -24,7 +26,7 @@ export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: stri
         </ul>
     </div>
 
-    <div class="w-full p-2">
+    <div class="w-full p-4">
         <div class="relative">
             <input id="${searchAuthorsInputId}" 
                 class="${Views.INPUT_LIKE_CLASSES} w-full" name="${AUTHORS_SEARCH_INPUT}" 
@@ -38,7 +40,7 @@ export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: stri
                 hx-target="#${searchResultsId}"
                 hx-include="#${searchAuthorsInputId}"
                 hx-indicator="#search-results-indicator"
-                hx-trigger="click">&#8635;</div>
+                hx-trigger="click">${REFRESH_ICON}</div>
         </div>
         <div id="search-results-indicator" class="load-indicator rounded-md text-xl shadow-md">
             ${homePageTranslations.searchLoader}
@@ -59,7 +61,7 @@ export function authorsSearchResult(result: AuthorWithRandomQuote[], authorEndpo
         results = `<div class="px-4">${Translations.defaultLocale.homePage.noAuthors}</div>`;
     }
 
-    return `<div class="space-y-2">${results}</div>`
+    return `<div class="space-y-4">${results}</div>`
 }
 
 function authorsSearchResultElement(author: AuthorWithRandomQuote, authorEndpoint: string): string {

@@ -27,13 +27,15 @@
     {
         "name": "Jordan Peterson",
         "note": [
-            "Some note about the author."
+            "Jordan B. Peterson, born on June 12, 1962, is a Canadian clinical psychologist, self-help writer, cultural critic and professor of psychology at the University of Toronto. ",
+            "His main areas of study are in abnormal, social, and personality psychology, with a particular interest in the psychology of religious and ideological belief, and the assessment and improvement of personality and performance."
         ],
         "quotes": [
             "I don't think that you have any insight whatsoever into your capacity for good until you have some well-developed insight into your capacity for evil.",
             "When you have something to say, silence is a lie.",
             "You're going to pay a price for every bloody thing you do and everything you don't do. You don't get to choose to not pay a price. You get to choose which poison you're going to take. That's it.",
-            "If you don't say what you think then you kill your unborn self."
+            "If you don't say what you think then you kill your unborn self.",
+            "The purpose of life, as far as I can tell… is to find a mode of being that’s so meaningful that the fact that life is suffering is no longer relevant."
         ]
     },
     {
@@ -59,7 +61,28 @@
             "If you don't know, the thing to do is not to get scared, but to learn.",
             "Freedom: To ask nothing. To expect nothing. To depend on nothing.",
             "A creative man is motivated by the desire to achieve, not by the desire to beat others.",
-            "The smallest minority on earth is the individual. Those who deny individual rights cannot claim to be defenders of minorities."
+            "The smallest minority on earth is the individual. Those who deny individual rights cannot claim to be defenders of minorities.",
+            "To sell your soul is the easiest thing in the world. That's what everybody does every hour of his life. If I asked you to keep your soul - would you understand why that's much harder?",
+            "The truth is not for all men but only for those who seek it."
+        ]
+    },
+    {
+        "name": "Marcus Aurelius",
+        "note": [
+            "(26 April 121 - 17 March 180) was Roman emperor from 161 to 180 AD and a Stoic philosopher. ",
+            "He was a member of the Nerva–Antonine dynasty, the last of the rulers later known as the Five Good Emperors and the last emperor of the Pax Romana, an age of relative peace, calm, and stability for the Roman Empire lasting from 27 BC to 180 AD. He served as Roman consul in 140, 145, and 161.",
+            "\n\n",
+            "Unlike some of his predecessors, Marcus chose not to adopt an heir. His children included Lucilla, who married Lucius, and Commodus, whose succession after Marcus has been a subject of debate among both contemporary and modern historians. ",
+            "The Column and Equestrian Statue of Marcus Aurelius still stand in Rome, where they were erected in celebration of his military victories. Meditations, the writings of \"the philosopher\" - as contemporary biographers called Marcus – are a significant source of the modern understanding of ancient Stoic philosophy. These writings have been praised by fellow writers, philosophers, monarchs, and politicians centuries after his death."
+        ],
+        "quotes": [
+            "You have power over your mind - not outside events. Realize this, and you will find strength.",
+            "The happiness of your life depends upon the quality of your thoughts.",
+            "Everything we hear is an opinion, not a fact. Everything we see is a perspective, not the truth.",
+            "Waste no more time arguing about what a good man should be. Be one.",
+            "The best revenge is to be unlike him who performed the injury.",
+            "It is not death that a man should fear, but he should fear never beginning to live.",
+            "Never let the future disturb you. You will meet it, if you have to, with the same weapons of reason which today arm you against the present.Never let the future disturb you. You will meet it, if you have to, with the same weapons of reason which today arm you against the present."
         ]
     }
 ]
