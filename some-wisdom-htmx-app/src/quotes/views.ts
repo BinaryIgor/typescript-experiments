@@ -101,7 +101,7 @@ export function quoteNotesPage(quoteNotes: QuoteNoteView[],
         }
         return `<div id="${noteElementId}" class="relative rounded-lg shadow p-8 cursor-pointer border-2 
             ${Views.PROPS.borderColorSecondary1} ${Views.PROPS.shadowColorSecondary2}">
-                    <p class="italic text-lg whitespace-pre">"${qn.note}"</p>
+                    <p class="italic text-lg whitespace-pre-line">"${qn.note}"</p>
                     <p class="text-right"><span class="font-bold">${qn.noteAuthor}</span> ${pageTranslations.on} ${qn.timestamp}</p>
                     ${deleteEl}
                 </div>`})
