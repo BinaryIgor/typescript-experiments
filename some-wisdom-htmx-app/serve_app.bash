@@ -29,12 +29,3 @@ cleanup() {
 trap cleanup INT
 
 tail -f $app_logs_output
-
-# while true;
-# do
-#    echo "Live-reloading: waiting for close command"
-#    echo "..."
-
-#    sleep 300
-#    echo
-# done

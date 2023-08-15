@@ -25,7 +25,7 @@ if (!fs.existsSync(sessionsDir)) {
 const authSessions = new AuthSessions(sessionsDir, sessionDuration, 60 * 1000);
 const sessionCookies = new SessionCookies(sessionDuration, "session-id", false);
 
-const dbPath = path.join(__dirname, "..", "assets", "db");
+const dbPath = process.env.DB_PATH ?? path.join(__dirname, "..", "assets", "db");
 const quoteNotesDbPath = path.join(dbPath, "__quote-notes.json");
 
 const authorsModule = AuthorsModule.build(QuotesModule.quoteEndpoint);
@@ -41,18 +41,20 @@ staticFileContentOfPath(path.join(dbPath, "users.json"))
     .then(db => FilesDb.importUsers(db, userModule.client))
     .catch(e => console.log("Failed to load users db!", e));
 
-//TODO: minification
-const STATIC_ASSETS_PATH = path.join(__dirname, "..", "assets");
+//TODO: minification/hashing + cache
+const STATIC_ASSETS_PATH = process.env.STATIC_ASSETS_PATH ?? path.join(__dirname, "..", "assets");
 
 const STYLES_PATH = function () {
     const stylesPath = process.env.STYLES_PATH;
     if (stylesPath) {
-        console.log(`Styles path overriden, taking them from: ${staticFileContent}`);
+        console.log(`Styles path overriden, taking them from: ${stylesPath}`);
         return stylesPath;
     } else {
         return path.join(STATIC_ASSETS_PATH, "style.css");
     }
 }();
+
+console.log("Styles path:", STYLES_PATH);
 
 const app = express();
 
