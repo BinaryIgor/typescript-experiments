@@ -8,13 +8,19 @@ export const asyncHandler = (fn: Function) => (req: Request, res: Response, next
     return Promise.resolve(fn(req, res, next)).catch(next);
 }
 
-export function returnCss(res: Response, css: string) {
+export function returnCss(res: Response, css: string, cacheControl?: string) {
     res.contentType("text/css");
+    if (cacheControl) {
+        res.setHeader("cache-control", cacheControl);
+    }
     res.send(css);
 }
 
-export function returnJs(res: Response, js: string) {
+export function returnJs(res: Response, js: string, cacheControl?: string) {
     res.contentType("application/javascript");
+    if (cacheControl) {
+        res.setHeader("cache-control", cacheControl);
+    }
     res.send(js);
 }
 
@@ -62,4 +68,8 @@ export function shouldReturnFullPage(req: Request): boolean {
 
 export function numberPathParam(req: Request, param: string): number {
     return parseInt(req.params[param]);
+}
+
+export function fileNameFromPath(req: Request): string {
+    return req.url.substring(req.url.lastIndexOf("/"));
 }

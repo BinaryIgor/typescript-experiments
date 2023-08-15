@@ -85,11 +85,11 @@ app.get("/index.html", authorsModule.returnHomePage);
 
 app.get("*", async (req: Request, res: Response) => {
     if (req.url.includes(".css")) {
-        const fileName = req.url.substring(req.url.lastIndexOf("/"));
-        Web.returnCss(res, await staticFileContentOfPath(path.join(appConfig.assets.stylesPath, fileName)));
+        const fileContent = await staticFileContentOfPath(path.join(appConfig.assets.stylesPath, Web.fileNameFromPath(req)));
+        Web.returnCss(res, fileContent, appConfig.assets.cacheControl);
     } else if (req.url.includes(".js")) {
-        const fileName = req.url.substring(req.url.lastIndexOf("/"));
-        Web.returnJs(res, await staticFileContentOfPath(path.join(appConfig.assets.path, fileName)));
+        const fileContent = await staticFileContentOfPath(path.join(appConfig.assets.path, Web.fileNameFromPath(req)));
+        Web.returnJs(res, fileContent, appConfig.assets.cacheControl);
     } else {
         Web.returnNotFound(res);
     }

@@ -1,17 +1,7 @@
 import path from "path";
 
-//TODO: minification/hashing + cache of assets
-
 function envVariableOrDefault(key: string, defaultValue: any) {
     return process.env[key] ?? defaultValue;
-}
-
-function envVariableOrThrow(key: string) {
-    const value = process.env[key];
-    if (value) {
-        return value;
-    }
-    throw new Error(`${key} env variable is required, but is undefined`);
 }
 
 export const getAssetsSrc = () => ({
@@ -37,7 +27,8 @@ export const getAppConfig = () => {
         },
         assets: {
             path: assetsPath,
-            stylesPath: envVariableOrDefault("ASSETS_STYLES_PATH", assetsPath)
+            stylesPath: envVariableOrDefault("ASSETS_STYLES_PATH", assetsPath),
+            cacheControl: envVariableOrDefault("ASSETS_CACHE_CONTROL", "")
         }
     }
 };
