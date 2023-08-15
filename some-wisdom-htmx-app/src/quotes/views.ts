@@ -82,25 +82,27 @@ export function quoteNotesPage(quoteNotes: QuoteNoteView[],
     deleteableQuoteNoteIds: number[],
     deleteQuoteNoteEndpoint: (noteId: number) => string) {
 
-    const confirmQuoteNoteDeleteMessage = "Are you sure you want to delete this note?";
+    const pageTranslations = Translations.defaultLocale.quotePage;
 
     return `<div id="notes-list" class="space-y-4">
             ${quoteNotes.map(qn => {
         const noteElementId = `notes-list-element-${qn.noteId}`;
         let deleteEl: string;
         if (deleteableQuoteNoteIds.includes(qn.noteId)) {
-            deleteEl = `<span class="text-3xl absolute top-0 right-0 p-2 cursor-pointer"
+            deleteEl = `<span class="text-4xl absolute top-0 right-2 
+                cursor-pointer ${Views.PROPS.hoverTxtColorSecondary2}"
                    hx-swap="delete"
                    hx-target="#${noteElementId}"
                    hx-delete="${deleteQuoteNoteEndpoint(qn.noteId)}"
-                   ${Views.CONFIRMABLE_ELEMENT_CONTENT_LABEL}="${confirmQuoteNoteDeleteMessage}">&times</span>`;
+                   ${Views.CONFIRMABLE_ELEMENT_TITLE_LABEL}="${pageTranslations.confirmDeleteQuoteNoteTitle}"
+                   ${Views.CONFIRMABLE_ELEMENT_CONTENT_LABEL}="${pageTranslations.confirmDeleteQuoteNoteContent}">${Views.CLOSE_ICON}</span>`;
         } else {
             deleteEl = "";
         }
         return `<div id="${noteElementId}" class="relative rounded-lg shadow p-8 cursor-pointer border-2 
             ${Views.PROPS.borderColorSecondary1} ${Views.PROPS.shadowColorSecondary2}">
-                    <p class="text-xl whitespace-pre">"${qn.note}"</p>
-                    <p class="text-right">Added by ${qn.noteAuthor}, on ${qn.timestamp}</p>
+                    <p class="italic text-lg whitespace-pre">"${qn.note}"</p>
+                    <p class="text-right"><span class="font-bold">${qn.noteAuthor}</span> ${pageTranslations.on} ${qn.timestamp}</p>
                     ${deleteEl}
                 </div>`})
             .join('\n')}

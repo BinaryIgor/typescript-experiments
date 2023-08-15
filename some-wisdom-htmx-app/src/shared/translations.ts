@@ -25,7 +25,10 @@ const en = {
         confirmAddQuoteNoteContent: "Are you sure that you want to add this note to the quote?",
         notes: "Notes",
         addQuote: "Add",
-        notePlaceholder: "Your note..."
+        notePlaceholder: "Your note...",
+        confirmDeleteQuoteNoteTitle: "Quote note confirmation",
+        confirmDeleteQuoteNoteContent: "Are you sure that you want to delete this note from the quote?",
+        on: "on"
     },
     confirmableModal: {
         cancel: "Cancel",

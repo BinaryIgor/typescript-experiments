@@ -63,7 +63,7 @@ export const INPUT_LIKE_CLASSES = `p-2 rounded-md ${PROPS.bgColorSecondary1} sha
 const ERROR_MESSAGE_CLASS = "error-message";
 const HX_ERROR_MESSAGE_TARGET = `next .${ERROR_MESSAGE_CLASS}`;
 
-const CLOSE_ICON = "&times;";
+export const CLOSE_ICON = "&times;";
 
 const MODAL_CLASSES = "fixed w-full h-full z-50 pt-32 bg-black/60";
 const MODAL_CONTENT_CLASSES = `w-11/12 md:w-8/12 xl:w-6/12 p-4 m-auto ${PROPS.bgColorSecondary1}
