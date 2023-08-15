@@ -8,7 +8,9 @@
     "test:file": "mocha --require ts-node/register test/**/$file.test.ts --exit",
     "build": "bash build_app.bash",
     "build-and-run": "bash build_app.bash && bash run_app.bash",
-    "serve": "bash serve_app.bash"
+    "serve": "bash serve_app.bash",
+    "build-docker": "docker build . -t some-wisdom-app",
+    "build-and-run-docker": "bash build_and_run_docker_app.bash"
   },
   "author": "Igor Roztropiński",
   "license": "ISC",

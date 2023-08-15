@@ -155,3 +155,14 @@ function appErrorStatus(error: AppError): number {
 app.listen(SERVER_PORT, () => {
     console.log(`Server started on ${SERVER_PORT}`);
 });
+
+//TODO: graceful shutdown
+process.on('SIGTERM', () => {
+    console.log("Received SIGTERM signal, exiting...")
+    process.exit();
+});
+
+process.on('SIGINT', () => {
+    console.log("Received SIGINT signal, exiting...")
+    process.exit();
+});
