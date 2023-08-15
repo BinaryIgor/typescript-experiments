@@ -35,7 +35,7 @@ export function build(
     //TODO: fix it!
     router.get(`${QUOTES_ENDPOINT}/:id`,
         Web.asyncHandler(async (req: Request, res: Response) => {
-            const quoteId = parseInt(req.params.id);
+            const quoteId = Web.numberPathParam(req, "id");
 
             const quote = quoteOfId(quoteId);
             if (quote) {
@@ -82,7 +82,7 @@ export function build(
 
     router.post(`${QUOTES_ENDPOINT}/:id/${QUOTE_NOTES_ENDPOINT_PART}`,
         Web.asyncHandler(async (req: Request, res: Response) => {
-            const quoteId = parseInt(req.params.id);
+            const quoteId = Web.numberPathParam(req, "id");
 
             const input = req.body as QuoteNoteInput;
             const author = AuthWeb.currentUserOrThrow(req);
@@ -100,7 +100,7 @@ export function build(
 
     router.get(`${QUOTES_ENDPOINT}/:id/${QUOTE_NOTES_SUMMARY_ENDPOINT_PART}`,
         Web.asyncHandler(async (req: Request, res: Response) => {
-            const quoteId = req.params.id as any as number;
+            const quoteId = Web.numberPathParam(req, "id");
             const quoteNotesCount = await quoteNoteService.notesOfQuoteCount(quoteId);
             Web.returnHtml(res, QuoteViews.quoteNotesSummaryComponent(quoteNotesCount));
         }));
@@ -115,7 +115,7 @@ export function build(
 
     router.delete(`${QUOTES_ENDPOINT}/${QUOTE_NOTES_ENDPOINT_PART}/:id`,
         Web.asyncHandler(async (req: Request, res: Response) => {
-            const quoteNoteId = parseInt(req.params.id);
+            const quoteNoteId = Web.numberPathParam(req, "id");
 
             const author = AuthWeb.currentUserOrThrow(req);
 

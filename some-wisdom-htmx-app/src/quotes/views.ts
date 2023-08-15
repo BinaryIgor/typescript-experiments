@@ -35,21 +35,21 @@ export function quotePage(params: {
         <p class="text-2xl">"${params.quote}"</p>
         <p class="text-xl font-bold text-right ${Views.PROPS.txtColorSecondary1} mt-8">${params.author}</p>
     </div>
-        <div>
-            <div class="flex justify-between py-4">
-                <p class="text-xl mt-4 mb-4 ml-4" hx-get="${params.getQuotesNotesSummaryEndpoint}" hx-trigger="${TRIGGERS.getNotesSummary} from:body">
+        <div class="py-4 px-4 lg:px-0">
+            <div class="flex justify-between my-4">
+                <div hx-get="${params.getQuotesNotesSummaryEndpoint}" hx-trigger="${TRIGGERS.getNotesSummary} from:body">
                     ${quoteNotesSummaryComponent(params.notes.length)}
-                </p>
+                </div>
                 <button class="${Views.BUTTON_LIKE_CLASSES} px-12" id="${addNoteButtonId}">${pageTranslations.addQuote}</button>
             </div>
-            <form id="${addNoteFormId}" class="py-4 shadow-md ${Views.HIDDEN_CLASS}"
+            <form id="${addNoteFormId}" class="py-4 ${Views.HIDDEN_CLASS}"
                 hx-post="${params.addQuoteNoteEndpoint}"
                 hx-target="#${notesListId}"
                 ${Views.FORM_LABEL}="${LABELS.quoteNoteForm}"
                 ${Views.CONFIRMABLE_ELEMENT_TITLE_LABEL}="${pageTranslations.confirmAddQuoteNoteTitle}"
                 ${Views.CONFIRMABLE_ELEMENT_CONTENT_LABEL}="${pageTranslations.confirmAddQuoteNoteContent}">
-                ${Views.textAreaWithHiddenError('note', pageTranslations.notePlaceholder, 
-                    params.validateQuoteNoteEndpoint)}
+                ${Views.textAreaWithHiddenError('note', pageTranslations.notePlaceholder,
+        params.validateQuoteNoteEndpoint)}
                 <div class="flex justify-end">
                     <input id="${addNoteFormSubmitId}" 
                         class="${Views.BUTTON_LIKE_CLASSES} py-4 px-12 ${Views.DISABLED_CLASS}"
@@ -75,7 +75,7 @@ export function quotePage(params: {
 }
 
 export function quoteNotesSummaryComponent(quoteNotes: number): string {
-    return `Notes (${quoteNotes})`;
+    return `<p class="text-xl mt-4 mb-4">${Translations.defaultLocale.quotePage.notes} (${quoteNotes})</p>`;
 }
 
 export function quoteNotesPage(quoteNotes: QuoteNoteView[],
@@ -83,21 +83,22 @@ export function quoteNotesPage(quoteNotes: QuoteNoteView[],
     deleteQuoteNoteEndpoint: (noteId: number) => string) {
 
     const confirmQuoteNoteDeleteMessage = "Are you sure you want to delete this note?";
-        
-    return `<div id="notes-list">
+
+    return `<div id="notes-list" class="space-y-4">
             ${quoteNotes.map(qn => {
-                const noteElementId = `notes-list-element-${qn.noteId}`;
-                let deleteEl: string;
-                if(deleteableQuoteNoteIds.includes(qn.noteId)) {
-                   deleteEl = `<span class="text-3xl absolute top-0 right-0 p-2 cursor-pointer"
+        const noteElementId = `notes-list-element-${qn.noteId}`;
+        let deleteEl: string;
+        if (deleteableQuoteNoteIds.includes(qn.noteId)) {
+            deleteEl = `<span class="text-3xl absolute top-0 right-0 p-2 cursor-pointer"
                    hx-swap="delete"
                    hx-target="#${noteElementId}"
                    hx-delete="${deleteQuoteNoteEndpoint(qn.noteId)}"
                    ${Views.CONFIRMABLE_ELEMENT_CONTENT_LABEL}="${confirmQuoteNoteDeleteMessage}">&times</span>`;
-                } else {
-                    deleteEl = "";
-                }
-                return `<div id="${noteElementId}" class="shadow-md p-4 relative">
+        } else {
+            deleteEl = "";
+        }
+        return `<div id="${noteElementId}" class="relative rounded-lg shadow p-8 cursor-pointer border-2 
+            ${Views.PROPS.borderColorSecondary1} ${Views.PROPS.shadowColorSecondary2}">
                     <p class="text-xl whitespace-pre">"${qn.note}"</p>
                     <p class="text-right">Added by ${qn.noteAuthor}, on ${qn.timestamp}</p>
                     ${deleteEl}

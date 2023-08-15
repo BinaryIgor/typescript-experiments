@@ -59,3 +59,7 @@ export function shouldReturnFullPage(req: Request): boolean {
     return (req.headers[HTMX_REQUEST_HEADER] ? false : true) &&
         (req.headers[HTMX_RESTORE_HISTORY_REQUEST] ? false : true)
 }
+
+export function numberPathParam(req: Request, param: string): number {
+    return parseInt(req.params[param]);
+}

@@ -95,11 +95,11 @@ export function wrappedInMainPage(html: string, currentUser: string | null): str
 }
 
 export function wrappedInCenteredDiv(html: string): string {
-    return `<div class="lg:px-40 xl:px-60 2xl:px-90">${html}</div>`
+    return `<div class="lg:px-40 xl:px-60 2xl:px-80">${html}</div>`
 }
 
 export function wrappedInToLeftDiv(html: string): string {
-    return `<div class="lg:pr-60 xl:pr-90 2xl:pr-[30rem]">${html}</div>`
+    return `<div class="lg:pr-60 xl:pr-80 2xl:pr-[30rem]">${html}</div>`
 }
 
 
@@ -257,7 +257,6 @@ export function pushRouteToHistoryIfNotFunction(...routes: string[]): string {
     return `pushRouteToHistoryIfNot(this, ${routesArgs})`;
 }
 
-//TODO: style it!
 export function errorPage(errors: ErrorCode[], renderFullPage: boolean, currentUser: string | null): string {
     const page = `<div>
         <h1 class="text-2xl mt-2 mb-6 font-medium">${Translations.defaultLocale.errorsModal.header}</h1>
