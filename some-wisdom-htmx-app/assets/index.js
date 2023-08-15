@@ -22,13 +22,15 @@ const HTMX_EVENTS = {
 const TRIGGERS = {
     showNavigation: "show-navigation",
     hideNavigation: "hide-navigation",
-    changeRoute: "change-route"
+    changeRoute: "change-route",
+    resetScroll: "reset-scroll"
 };
 
 const scrollPositions = {
     restorablePaths: ["/authors"],
     positions: new Map()
 };
+let scrollReset = false;
 
 initConfirmableModal();
 initErrorModal();
@@ -151,6 +153,7 @@ function initEventListeners() {
     });
     window.addEventListener("htmx:pushedIntoHistory", e => {
         console.log("Element pushed into history", e, "url", location.pathname);
+        scrollReset = false;
     });
 
     window.addEventListener("form-validated", e => {
@@ -195,7 +198,7 @@ function initEventListeners() {
     let lastPath = null;
     let restorablePath = false;
     document.addEventListener("scroll", () => {
-        if (window.scrollY == 0) {
+        if (window.scrollY == 0 || scrollReset) {
             return;
         }
         const currentPath = location.pathname;
@@ -235,6 +238,8 @@ function initEventListeners() {
             historyRestored = false;
         }
     });
+
+    addEventListener(TRIGGERS.resetScroll, resetScroll);
 }
 
 function pushRouteToHistoryIfNot(el, ...routes) {
@@ -249,4 +254,13 @@ function pushRouteToHistoryIfNot(el, ...routes) {
 
     el.setAttribute(HTMX_PUSH_URL_ATTRIBUTE, `${pushUrl}`);
     el.dispatchEvent(new Event(TRIGGERS.changeRoute));
+}
+
+function resetScroll() {
+    console.log("Resetting scroll...");
+    window.scrollTo({
+        top: 0,
+        left: 0
+    });
+    scrollReset = true;
 }

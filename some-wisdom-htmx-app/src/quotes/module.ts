@@ -52,7 +52,7 @@ export function build(
                     validateQuoteAuthorEndpoint: QUOTE_NOTES_VALIDATE_AUTHOR_ENDPOINT,
                     renderFullPage: Web.shouldReturnFullPage(req),
                     currentUser: AuthWeb.currentUserName(req)
-                }));
+                }), Views.TRIGGERS.resetScroll);
             } else {
                 Web.returnNotFound(res);
             }
