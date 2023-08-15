@@ -42,7 +42,7 @@ export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: stri
                 hx-indicator="#search-results-indicator"
                 hx-trigger="click">${REFRESH_ICON}</div>
         </div>
-        <div id="search-results-indicator" class="load-indicator rounded-md text-xl shadow-md">
+        <div id="search-results-indicator" class="load-indicator text-xl">
             ${homePageTranslations.searchLoader}
         </div>
         <div class="mt-2" id="${searchResultsId}"></div>

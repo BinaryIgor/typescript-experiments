@@ -1,4 +1,3 @@
-console.log("Loading index js...");
 
 const navigationId = "app-navigation";
 const navigationDropdownId = "app-navigation-dropdown";
@@ -11,19 +10,21 @@ const DISABLED_CLASS = "disabled";
 const HTMX_PUSH_URL_ATTRIBUTE = "hx-push-url";
 
 const HTMX_EVENTS = {
-    configRequest: "htmx:configRequest",
-    afterRequest: "htmx:afterRequest",
     confirm: "htmx:confirm",
     afterSwap: "htmx:afterSwap",
     historyRestored: "htmx:historyCacheMissLoad",
-    load: "htmx:load"
+    load: "htmx:load",
+    responseError: "htmx:responseError",
+    sendError: "htmx:sendError",
+    pushedIntoHistory: "htmx:pushedIntoHistory"
 };
 
 const TRIGGERS = {
-    showNavigation: "show-navigation",
     hideNavigation: "hide-navigation",
     changeRoute: "change-route",
-    resetScroll: "reset-scroll"
+    resetScroll: "reset-scroll",
+    formValidated: "form-validated",
+    resetForm: "reset-form"
 };
 
 const scrollPositions = {
@@ -37,29 +38,11 @@ initErrorModal();
 initNavigation();
 initEventListeners();
 
-function initErrorModal() {
-    const errorModal = document.getElementById("error-modal");
-    const errorModalContent = document.getElementById("error-modal-content");
-
-    document.getElementById("error-modal-close").onclick = () => {
-        errorModal.classList.toggle(HIDDEN_CLASS);
-    };
-
-    document.addEventListener("htmx:responseError", e => {
-        errorModalContent.innerHTML = e.detail.xhr.response;
-        errorModal.classList.toggle(HIDDEN_CLASS);
-    });
-
-    document.addEventListener("htmx:sendError", e => {
-        errorModalContent.innerHTML = "Server unavailable";
-        errorModal.classList.toggle(HIDDEN_CLASS);
-    });
-}
-
 function initConfirmableModal() {
     const confirmableModal = document.getElementById("confirmable-modal");
     const confirmableModalTitle = document.getElementById("confirmable-modal-title");
     const confirmableModalContent = document.getElementById("confirmable-modal-content");
+
     let confirmableEvent = null;
 
     function isModalShown() {
@@ -87,20 +70,18 @@ function initConfirmableModal() {
         }
     };
 
-    document.getElementById("confirmable-modal-close").onclick = () => {
-        confirmableModal.classList.toggle(HIDDEN_CLASS);
-    };
+    document.getElementById("confirmable-modal-close").onclick = () => confirmableModal.classList.toggle(HIDDEN_CLASS);
 
     document.addEventListener(HTMX_EVENTS.confirm, e => {
         const sourceElement = e.detail.elt;
         const confirmableTitleMessage = sourceElement.getAttribute(CONFIRMABLE_ELEMENT_TITLE_LABEL);
         const confirmableContentMessage = sourceElement.getAttribute(CONFIRMABLE_ELEMENT_CONTENT_LABEL);
-        
+
         if (confirmableTitleMessage || confirmableContentMessage) {
             e.preventDefault();
 
             confirmableEvent = e;
-            
+
             if (confirmableTitleMessage) {
                 confirmableModalTitle.innerHTML = confirmableTitleMessage;
             }
@@ -116,6 +97,25 @@ function initConfirmableModal() {
         if (isModalShown()) {
             hideModal();
         }
+    });
+}
+
+function initErrorModal() {
+    const errorModal = document.getElementById("error-modal");
+    const errorModalContent = document.getElementById("error-modal-content");
+
+    document.getElementById("error-modal-close").onclick = () => {
+        errorModal.classList.toggle(HIDDEN_CLASS);
+    };
+
+    document.addEventListener(HTMX_EVENTS.responseError, e => {
+        errorModalContent.innerHTML = e.detail.xhr.response;
+        errorModal.classList.remove(HIDDEN_CLASS);
+    });
+
+    document.addEventListener(HTMX_EVENTS.sendError, e => {
+        errorModalContent.innerHTML = "Server unavailable";
+        errorModal.classList.remove(HIDDEN_CLASS);
     });
 }
 
@@ -148,15 +148,14 @@ function initNavigation() {
 }
 
 function initEventListeners() {
-    window.addEventListener("popstate", e => {
-        console.log("Popping state!", e, "url:", location.pathname);
-    });
-    window.addEventListener("htmx:pushedIntoHistory", e => {
-        console.log("Element pushed into history", e, "url", location.pathname);
+    // window.addEventListener("popstate", e => {
+    //     console.log("Popping state!", e, "url:", location.pathname);
+    // });
+    window.addEventListener(HTMX_EVENTS.pushedIntoHistory, e => {
         scrollReset = false;
     });
 
-    window.addEventListener("form-validated", e => {
+    window.addEventListener(TRIGGERS.formValidated, e => {
         const label = e.detail.label;
         if (label) {
             const formValid = e.detail.valid;
@@ -174,7 +173,7 @@ function initEventListeners() {
         }
     });
 
-    window.addEventListener("reset-form", e => {
+    window.addEventListener(TRIGGERS.resetForm, e => {
         const formToReset = document.querySelector(`[${FORM_LABEL}="${e.detail.value}"]`);
         if (formToReset) {
             formToReset.querySelectorAll("input").forEach(i => {
@@ -186,10 +185,10 @@ function initEventListeners() {
         }
     });
 
-    window.addEventListener(HTMX_EVENTS.configRequest, e => {
-        console.log("Request...", e.detail);
-        // e.preventDefault();
-    });
+    // window.addEventListener(HTMX_EVENTS.configRequest, e => {
+    //     console.log("Request...", e.detail);
+    //     // e.preventDefault();
+    // });
 
     addEventListener(TRIGGERS.hideNavigation, e => {
         document.getElementById(navigationId).classList.add(HIDDEN_CLASS);
@@ -239,7 +238,13 @@ function initEventListeners() {
         }
     });
 
-    addEventListener(TRIGGERS.resetScroll, resetScroll);
+    addEventListener(TRIGGERS.resetScroll, () => {
+        window.scrollTo({
+            top: 0,
+            left: 0
+        });
+        scrollReset = true;
+    });
 }
 
 function pushRouteToHistoryIfNot(el, ...routes) {
@@ -254,13 +259,4 @@ function pushRouteToHistoryIfNot(el, ...routes) {
 
     el.setAttribute(HTMX_PUSH_URL_ATTRIBUTE, `${pushUrl}`);
     el.dispatchEvent(new Event(TRIGGERS.changeRoute));
-}
-
-function resetScroll() {
-    console.log("Resetting scroll...");
-    window.scrollTo({
-        top: 0,
-        left: 0
-    });
-    scrollReset = true;
 }
