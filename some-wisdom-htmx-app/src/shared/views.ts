@@ -102,7 +102,6 @@ export function wrappedInToLeftDiv(html: string): string {
     return `<div class="lg:pr-60 xl:pr-80 2xl:pr-[30rem]">${html}</div>`
 }
 
-
 export function inputWithHiddenError(props: {
     name: string,
     placeholder: string,
@@ -164,14 +163,9 @@ export function inputErrorIf(error: OptionalErrorCode = null, additionalClasses?
 
 export function inlineJs(js: string, scoped: boolean = true): string {
     if (scoped) {
-        js = `
-            (function() {
-                ${js}
-            }());
-        `;
+        js = `(function() { ${js} }());`;
     }
-    // Wait for index.js
-    return `<script type="module">${js}</script>`
+    return `<script>${js}</script>`
 }
 
 function confirmableModal(): string {

@@ -18,8 +18,6 @@ export function build(quoteEndpoint: (quoteId: number) => string): AuthorModule 
     const router = Router();
 
     router.post(SEARCH_AUTHORS_ENDPOINT, (req: Request, res: Response) => {
-        console.log("Searching fo authors...", req.body);
-
         const query = req.body[Views.AUTHORS_SEARCH_INPUT];
 
         const foundAuthors = authorRepository.search(query);
@@ -33,7 +31,6 @@ export function build(quoteEndpoint: (quoteId: number) => string): AuthorModule 
 
     router.get(`${AUTHORS_ENDPOINT}/:name`, (req: Request, res: Response) => {
         const name = req.params.name;
-        console.log("Getting author:", name);
 
         const author = authorRepository.ofName(name);
         if (author) {

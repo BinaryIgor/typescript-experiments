@@ -10,7 +10,7 @@ nohup npx tailwindcss -i ./assets/style.css -o ./dist/assets/style.css --watch=a
 tailwind_pid=$!
 
 echo "Starting live-reloading some-wisdom app, logging to $app_logs_output..."
-nohup npx nodemon --ignore '**/static/db/**' src/app.ts > $app_logs_output &
+nohup npx nodemon --ignore '**/assets/db/**' src/app.ts > $app_logs_output &
 app_pid=$!
 
 echo "App pid: $app_pid, tailwind: $tailwind_pid"
