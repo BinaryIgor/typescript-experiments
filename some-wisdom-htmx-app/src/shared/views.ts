@@ -1,12 +1,10 @@
+import { getAssetsSrc } from "../app-config";
 import { ErrorCode, OptionalErrorCode } from "./errors";
 import { Translations } from "./translations";
 
-const HTMX_SRC = "https://unpkg.com/htmx.org@1.9.3";
 export const ROOT_ID = "app";
 
 export const AUTHORS_SEARCH_INPUT = "authors-search";
-const STYLE_SRC = "/style.css";
-const INDEX_JS_SRC = "/index.js";
 
 export const FORM_LABEL = "data-form";
 export const CONFIRMABLE_ELEMENT_TITLE_LABEL = "data-confirmable-element-title";
@@ -71,6 +69,7 @@ const MODAL_CONTENT_CLASSES = `w-11/12 md:w-8/12 xl:w-6/12 p-4 m-auto ${PROPS.bg
     relative rounded-lg`;
 
 export function wrappedInMainPage(html: string, currentUser: string | null): string {
+    const assetsSrc = getAssetsSrc();
     return `<!DOCTYPE html>
     <html lang="en">
       <head>
@@ -78,7 +77,7 @@ export function wrappedInMainPage(html: string, currentUser: string | null): str
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
         <title>${Translations.defaultLocale.appTitle}</title>
-        <link rel="stylesheet" href="${STYLE_SRC}"/>
+        <link rel="stylesheet" href="${assetsSrc.styles}"/>
       </head>
       <body class="${PROPS.bgColorPrimary} ${PROPS.txtColorPrimary}">
         ${confirmableModal()}
@@ -90,8 +89,8 @@ export function wrappedInMainPage(html: string, currentUser: string | null): str
         </div>
       </body>
 
-      <script src="${HTMX_SRC}"></script>
-      <script src="${INDEX_JS_SRC}"></script>
+      <script src="${assetsSrc.htmx}"></script>
+      <script src="${assetsSrc.indexJs}"></script>
     </html>`;
 }
 

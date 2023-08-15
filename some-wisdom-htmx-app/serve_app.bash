@@ -3,7 +3,7 @@ logs_output="/tmp"
 tailwind_logs_output="$logs_output/tailwind.txt"
 app_logs_output="$logs_output/some-wisdom-app.txt"
 
-export STYLES_PATH="${PWD}/dist/assets/style.css" 
+export ASSETS_STYLES_PATH="${PWD}/dist/assets" 
 
 echo "Starting live-reloading tailwind styles, logging to $tailwind_logs_output..."
 nohup npx tailwindcss -i ./assets/style.css -o ./dist/assets/style.css --watch=always > $tailwind_logs_output &

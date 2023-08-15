@@ -11,50 +11,33 @@ import { setCurrentUser, SessionCookies, currentUserName } from "./auth/web";
 import * as AuthorsModule from "./authors/module";
 import * as UserModule from "./user/module";
 import * as QuotesModule from "./quotes/module";
+import { getAppConfig } from "./app-config";
 
-const SERVER_PORT = 8080;
+const appConfig = getAppConfig();
 
-//5 hours;
-const sessionDuration = 5 * 60 * 60 * 1000;
-const sessionsDir = path.join("/tmp", "session");
+const sessionConfig = appConfig.session;
 
-if (!fs.existsSync(sessionsDir)) {
-    fs.mkdirSync(sessionsDir);
+if (!fs.existsSync(sessionConfig.dir)) {
+    fs.mkdirSync(sessionConfig.dir);
 }
 
-const authSessions = new AuthSessions(sessionsDir, sessionDuration, 60 * 1000);
-const sessionCookies = new SessionCookies(sessionDuration, "session-id", false);
+const authSessions = new AuthSessions(sessionConfig.dir, sessionConfig.dir, sessionConfig.refreshInterval);
+const sessionCookies = new SessionCookies(sessionConfig.dir, "session-id", false);
 
-const dbPath = process.env.DB_PATH ?? path.join(__dirname, "..", "assets", "db");
-const quoteNotesDbPath = path.join(dbPath, "__quote-notes.json");
+const quoteNotesDbPath = path.join(appConfig.db.path, "__quote-notes.json");
 
 const authorsModule = AuthorsModule.build(QuotesModule.quoteEndpoint);
 const userModule = UserModule.build(authSessions, sessionCookies, authorsModule.returnHomePage);
 const quotesModule = QuotesModule.build(quoteNotesDbPath,
     authorsModule.client.quoteOfId, userModule.client.usersOfIds);
 
-staticFileContentOfPath(path.join(dbPath, "authors.json"))
+staticFileContentOfPath(path.join(appConfig.db.path, "authors.json"))
     .then(db => FilesDb.importAuthors(db, authorsModule.client))
     .catch(e => console.log("Failed to load authors db!", e));
 
-staticFileContentOfPath(path.join(dbPath, "users.json"))
+staticFileContentOfPath(path.join(appConfig.db.path, "users.json"))
     .then(db => FilesDb.importUsers(db, userModule.client))
     .catch(e => console.log("Failed to load users db!", e));
-
-//TODO: minification/hashing + cache
-const STATIC_ASSETS_PATH = process.env.STATIC_ASSETS_PATH ?? path.join(__dirname, "..", "assets");
-
-const STYLES_PATH = function () {
-    const stylesPath = process.env.STYLES_PATH;
-    if (stylesPath) {
-        console.log(`Styles path overriden, taking them from: ${stylesPath}`);
-        return stylesPath;
-    } else {
-        return path.join(STATIC_ASSETS_PATH, "style.css");
-    }
-}();
-
-console.log("Styles path:", STYLES_PATH);
 
 const app = express();
 
@@ -101,20 +84,16 @@ app.get("/", authorsModule.returnHomePage);
 app.get("/index.html", authorsModule.returnHomePage);
 
 app.get("*", async (req: Request, res: Response) => {
-    console.log("REq body...", req.body);
-    if (req.url.includes("style")) {
-        Web.returnCss(res, await staticFileContentOfPath(STYLES_PATH));
+    if (req.url.includes(".css")) {
+        const fileName = req.url.substring(req.url.lastIndexOf("/"));
+        Web.returnCss(res, await staticFileContentOfPath(path.join(appConfig.assets.stylesPath, fileName)));
     } else if (req.url.includes(".js")) {
         const fileName = req.url.substring(req.url.lastIndexOf("/"));
-        Web.returnJs(res, await staticFileContentOfPath(path.join(STATIC_ASSETS_PATH, fileName)));
+        Web.returnJs(res, await staticFileContentOfPath(path.join(appConfig.assets.path, fileName)));
     } else {
         Web.returnNotFound(res);
     }
 })
-
-function staticFileContent(filename: string): Promise<string> {
-    return staticFileContentOfPath(path.join(__dirname, "static", filename));
-}
 
 function staticFileContentOfPath(path: string): Promise<string> {
     return fs.promises.readFile(path, 'utf-8');
@@ -152,8 +131,8 @@ function appErrorStatus(error: AppError): number {
     return 400;
 }
 
-app.listen(SERVER_PORT, () => {
-    console.log(`Server started on ${SERVER_PORT}`);
+app.listen(appConfig.server.port, () => {
+    console.log(`Server started on ${appConfig.server.port}`);
 });
 
 //TODO: graceful shutdown
