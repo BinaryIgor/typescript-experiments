@@ -1,10 +1,10 @@
 # Some wisdom app
 
-App with some wisdom test out, what's the htmx fuzz all about.
+App with some wisdom to test out, what's the htmx fuzz all about.
 
 Requirements
 * node >= 19
-* Docker, if you don't want to bother if node locally
+* Docker, if you don't want to bother with node locally
 
 Prepare:
 ```
@@ -15,7 +15,7 @@ Or if you would like another package-lock.json:
 npm install
 ```
 
-Live-reaload (code + tailwind):
+Live-reload (code + tailwind):
 ```
 npm run serve
 ```
@@ -26,4 +26,8 @@ npm run build
 Build and run:
 ```
 npm run build-and-run
+```
+Build and run in Docker:
+```
+npm run build-and-run-docker
 ```

@@ -4,6 +4,7 @@ function envVariableOrDefault(key: string, defaultValue: any) {
     return process.env[key] ?? defaultValue;
 }
 
+//TODO: download htmx to assets and serve it directly from there
 export const getAssetsSrc = () => ({
     htmx: envVariableOrDefault("ASSETS_HTMX_SRC", "https://unpkg.com/htmx.org@1.9.3"),
     styles: envVariableOrDefault("ASSETS_STYLES_SRC", "/style.css"),
