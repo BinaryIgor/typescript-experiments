@@ -1,3 +1,4 @@
+import exp from "constants";
 import { getAssetsSrc } from "../app-config";
 import { ErrorCode, OptionalErrorCode } from "./errors";
 import { Translations } from "./translations";
@@ -15,8 +16,6 @@ export const HIDDEN_CLASS = "hidden";
 export const DISABLED_CLASS = "disabled";
 
 export const TRIGGERS = {
-    showNavigation: "show-navigation",
-    hideNavigation: "hide-navigation",
     changeRoute: "change-route",
     resetScroll: "reset-scroll"
 };
@@ -82,7 +81,7 @@ export function wrappedInMainPage(html: string, currentUser: string | null): str
       <body class="${PROPS.bgColorPrimary} ${PROPS.txtColorPrimary}">
         ${confirmableModal()}
         ${errorModal()}
-        ${navigationComponent(currentUser)}
+        ${navigationComponent(currentUser, false)}
         
         <div hx-history="false" id="${ROOT_ID}" hx-history-elt>
             ${html}
@@ -95,11 +94,11 @@ export function wrappedInMainPage(html: string, currentUser: string | null): str
 }
 
 export function wrappedInCenteredDiv(html: string): string {
-    return `<div class="lg:px-40 xl:px-60 2xl:px-80">${html}</div>`
+    return `<div class="lg:px-40 xl:px-60 2xl:px-80">${html.trim()}</div>`
 }
 
 export function wrappedInToLeftDiv(html: string): string {
-    return `<div class="lg:pr-60 xl:pr-80 2xl:pr-[30rem]">${html}</div>`
+    return `<div class="lg:pr-60 xl:pr-80 2xl:pr-[30rem]">${html.trim()}</div>`
 }
 
 export function inputWithHiddenError(props: {
@@ -198,7 +197,7 @@ export function errorModal(): string {
     </div>`;
 }
 
-export function navigationComponent(currentUser: string | null): string {
+export function navigationComponent(currentUser: string | null, withExternalSwap: boolean): string {
     let navigationClasses = `z-10 sticky flex justify-between top-0 w-full py-4 px-2 border-b-4  
         ${PROPS.borderColorSecondary2} ${PROPS.bgColorPrimary} ${PROPS.txtColorSecondary2}`;
     
@@ -209,10 +208,7 @@ export function navigationComponent(currentUser: string | null): string {
     const dropDownElementClasses = `${PROPS.hoverBgColorPrimary} ${PROPS.hoverTxtColorPrimary} py-2 px-4`;
 
     //Id is used by index.js
-    return `<div id="app-navigation" class="${navigationClasses}"
-        hx-get="${GET_CURRENT_USER_ENDPOINT}"
-        hx-trigger="${TRIGGERS.showNavigation} from:body"
-        hx-swap="outerHTML">
+    return `<div id="app-navigation" class="${navigationClasses}" ${oobSwapIf(withExternalSwap)}>
         <div class="text-2xl cursor-pointer"
             hx-get="/"
             hx-trigger="${TRIGGERS.changeRoute}"
@@ -246,6 +242,10 @@ export function navigationComponent(currentUser: string | null): string {
     </div>`;
 }
 
+export function oobSwapIf(externalSwap: boolean): string {
+    return `${externalSwap ? 'hx-swap-oob="true"' : ""}`;
+}
+
 export function pushRouteToHistoryIfNotFunction(...routes: string[]): string {
     const routesArgs = routes.map(e => `'${e}'`).join(", ");
     return `pushRouteToHistoryIfNot(this, ${routesArgs})`;
@@ -268,7 +268,7 @@ export function formValidatedTrigger(formLabel: string, valid: boolean) {
     });
 }
 
-export function resetFormTrigger(label: string, additionalTriggers: any): string {
+export function resetFormTrigger(label: string, ...additionalTriggers: any): string {
     return JSON.stringify({
         "reset-form": label,
         ...additionalTriggers

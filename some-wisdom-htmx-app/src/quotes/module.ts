@@ -16,7 +16,6 @@ const QUOTE_NOTES_ENDPOINT_PART = "notes";
 const QUOTES_NOTES_PREFIX = `${QUOTES_ENDPOINT}/${QUOTE_NOTES_ENDPOINT_PART}`
 const QUOTE_NOTES_VALIDATE_NOTE_ENDPOINT = `${QUOTES_NOTES_PREFIX}/validate-note`;
 const QUOTE_NOTES_VALIDATE_AUTHOR_ENDPOINT = `${QUOTES_NOTES_PREFIX}/validate-author`;
-const QUOTE_NOTES_SUMMARY_ENDPOINT_PART = `summary`;
 
 export function quoteEndpoint(quoteId: number): string {
     return `${QUOTES_ENDPOINT}/${quoteId}`;
@@ -46,7 +45,6 @@ export function build(
                     notes: notes,
                     deletableNoteIds: deleteableNoteIds,
                     deleteQuoteNoteEndpoint: deleteQuoteNoteEndpoint,
-                    getQuotesNotesSummaryEndpoint: getQuoteNotesSummaryEndpoint(quoteId),
                     addQuoteNoteEndpoint: addQuoteNoteEndpoint(quoteId),
                     validateQuoteNoteEndpoint: QUOTE_NOTES_VALIDATE_NOTE_ENDPOINT,
                     validateQuoteAuthorEndpoint: QUOTE_NOTES_VALIDATE_AUTHOR_ENDPOINT,
@@ -66,10 +64,6 @@ export function build(
         const deleteableNoteIds = notes.filter(n => n.noteAuthorId == currentUserId).map(n => n.noteId);
 
         return { notes: Mapper.toQuoteNoteViews(notes, authors), deleteableNoteIds }
-    }
-
-    function getQuoteNotesSummaryEndpoint(quoteId: number): string {
-        return `${QUOTES_ENDPOINT}/${quoteId}/${QUOTE_NOTES_SUMMARY_ENDPOINT_PART}`;
     }
 
     function addQuoteNoteEndpoint(quoteId: number): string {
@@ -93,17 +87,10 @@ export function build(
 
             const { notes: newNotes, deleteableNoteIds } = await quoteNoteViews(author.id, quoteId);
 
-            Web.returnHtml(res, QuoteViews.quoteNotesPage(newNotes, deleteableNoteIds, deleteQuoteNoteEndpoint),
-                Views.resetFormTrigger(QuoteViews.LABELS.quoteNoteForm,
-                    Views.additionalTrigersOfKeys(QuoteViews.TRIGGERS.getNotesSummary)));
+            Web.returnHtml(res, QuoteViews.quoteNotesPage(newNotes, deleteableNoteIds, deleteQuoteNoteEndpoint, true),
+                Views.resetFormTrigger(QuoteViews.LABELS.quoteNoteForm));
         }));
 
-    router.get(`${QUOTES_ENDPOINT}/:id/${QUOTE_NOTES_SUMMARY_ENDPOINT_PART}`,
-        Web.asyncHandler(async (req: Request, res: Response) => {
-            const quoteId = Web.numberPathParam(req, "id");
-            const quoteNotesCount = await quoteNoteService.notesOfQuoteCount(quoteId);
-            Web.returnHtml(res, QuoteViews.quoteNotesSummaryComponent(quoteNotesCount));
-        }));
 
     router.post(QUOTE_NOTES_VALIDATE_NOTE_ENDPOINT, (req: Request, res: Response) => {
         const input = req.body as QuoteNoteInput;
@@ -119,9 +106,11 @@ export function build(
 
             const author = AuthWeb.currentUserOrThrow(req);
 
-            await quoteNoteService.deleteNote(quoteNoteId, author.id);
+            const deletedNoteQuoteId = await quoteNoteService.deleteNote(quoteNoteId, author.id);
 
-            Web.returnHtml(res, "", QuoteViews.TRIGGERS.getNotesSummary);
+            const quoteNotesCount = await quoteNoteService.notesOfQuoteCount(deletedNoteQuoteId);
+
+            Web.returnHtml(res, QuoteViews.quoteNotesSummaryComponent(quoteNotesCount));
         }));
 
     return new QuoteModule(router);

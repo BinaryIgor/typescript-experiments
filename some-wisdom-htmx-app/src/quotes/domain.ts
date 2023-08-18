@@ -51,7 +51,7 @@ export class QuoteNoteService {
         return (await this.repository.allOfQuote(quoteId)).length;
     }
 
-    async deleteNote(noteId: number, userId: number) {
+    async deleteNote(noteId: number, userId: number): Promise<number> {
         const note = await this.repository.ofId(noteId);
         if (!note) {
             throw AppError.ofSingleError(Errors.QUOTE_NOTE_DOES_NOT_EXIST);
@@ -62,6 +62,8 @@ export class QuoteNoteService {
         }
 
         await this.repository.delete(noteId);
+
+        return note.quoteId;
     }
 }
 

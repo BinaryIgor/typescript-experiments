@@ -11,6 +11,7 @@ export const CLASSES = {
 export function signInPage(signInEndpoint: string,
     validateNameEndpoint: string,
     validatePasswordEndpoint: string,
+    withNavigationToHide: boolean,
     renderFullPage: boolean): string {
 
     const nameInput = Views.inputWithHiddenError({
@@ -28,7 +29,7 @@ export function signInPage(signInEndpoint: string,
         errorClasses: CLASSES.signInPasswordInputError
     })
 
-    const page = `
+    const page = `${withNavigationToHide ? Views.navigationComponent(null, true): ""}
     <h1 class="p-4 text-2xl">Let's get some wisdom</h1>
     <form class="p-4 relative w-fit"
         hx-post="${signInEndpoint}"
@@ -39,7 +40,7 @@ export function signInPage(signInEndpoint: string,
         <input class="w-full py-4 ${Views.DISABLED_CLASS} ${Views.BUTTON_LIKE_CLASSES}" 
             type="submit" value="${Translations.defaultLocale.signInPage.signInButton}"
         ${Views.SUBMIT_FORM_LABEL}="${SIGN_FORM_LABEL}" ${Views.DISABLED_CLASS}>
-    </form>`;
+    </form>`.trim();
     return renderFullPage ? Views.wrappedInMainPage(page, null) : page;
 }
 

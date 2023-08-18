@@ -34,7 +34,7 @@ export class SessionCookies {
     }
 }
 
-export function setCurrentUser(req: any, user: AuthUser) {
+export function setCurrentUser(req: any, user: AuthUser | null) {
     req.user = user;
 }
 

@@ -7,9 +7,12 @@ const AUTHOR_QUOTE_PREVIEW_MAX_LENGTH = 300;
 
 const REFRESH_ICON = "&#8635;";
 
-export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: string,
-    renderFullPage: boolean,
-    currentUser: string | null): string {
+export function homePage(
+    suggestedAuthors: string[],
+    searchAuthorsEndpoint: string,
+    currentUser: string | null,
+    withSwappedNavigation: boolean,
+    renderFullPage: boolean): string {
     const homePageTranslations = Translations.defaultLocale.homePage;
 
     const authorsList = suggestedAuthors.map(a => `<li class="ml-4 font-medium">${a}</li>`).join("\n");
@@ -17,7 +20,8 @@ export function homePage(suggestedAuthors: string[], searchAuthorsEndpoint: stri
     const searchResultsId = "search-results";
     const searchAuthorsInputId = "search-authors-input";
 
-    const page = Views.wrappedInToLeftDiv(`<h1 class="m-2 text-xl">${homePageTranslations.header}</h1>
+    const page = Views.wrappedInToLeftDiv(`${withSwappedNavigation ? Views.navigationComponent(currentUser, true): ""}
+    <h1 class="m-2 text-xl">${homePageTranslations.header}</h1>
 
     <div class="m-4">
         ${homePageTranslations.suggestion}

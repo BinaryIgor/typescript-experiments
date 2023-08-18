@@ -41,11 +41,12 @@ export function build(quoteEndpoint: (quoteId: number) => string): AuthorModule 
         }
     });
 
-    function returnHomePage(req: Request, res: Response) {
+    function returnHomePage(req: Request, res: Response, withSwappedNavigation: boolean) {
         const homePage = AuthorViews.homePage(authorRepository.random(3).map(a => a.name),
             SEARCH_AUTHORS_ENDPOINT,
-            Web.shouldReturnFullPage(req),
-            AuthWeb.currentUserName(req));
+            AuthWeb.currentUserName(req),
+            withSwappedNavigation,
+            Web.shouldReturnFullPage(req));
 
         Web.returnHtml(res, homePage);
     }
@@ -62,7 +63,7 @@ export function build(quoteEndpoint: (quoteId: number) => string): AuthorModule 
 
 export class AuthorModule {
     constructor(readonly router: Router, readonly client: AuthorClient,
-        readonly returnHomePage: (req: Request, res: Response) => void) { }
+        readonly returnHomePage: (req: Request, res: Response, withSwappedNavigation: boolean) => void) { }
 }
 
 export interface AuthorClient {

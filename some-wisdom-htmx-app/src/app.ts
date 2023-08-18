@@ -80,8 +80,8 @@ app.use(userModule.router);
 app.use(authorsModule.router);
 app.use(quotesModule.router);
 
-app.get("/", authorsModule.returnHomePage);
-app.get("/index.html", authorsModule.returnHomePage);
+app.get("/", (req: Request, res: Response) => authorsModule.returnHomePage(req, res, false));
+app.get("/index.html", (req: Request, res: Response) => authorsModule.returnHomePage(req, res, false));
 
 app.get("*", async (req: Request, res: Response) => {
     if (req.url.includes(".css")) {

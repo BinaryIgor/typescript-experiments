@@ -1,22 +1,18 @@
 import { Translations } from "../shared/translations";
 import * as Views from "../shared/views";
 
-export const TRIGGERS = {
-    getNotesSummary: "get-notes-summary"
-};
-
 export const LABELS = {
     quoteNoteForm: "quote-note-form"
 };
 
-//TODO: simplify params
+const QUOTE_NOTES_SUMMARY_ID = "quote-notes-summary";
+
 export function quotePage(params: {
     author: string,
     quote: string,
     notes: QuoteNoteView[],
     deletableNoteIds: number[],
-    deleteQuoteNoteEndpoint: (quoteId: number) => string,
-    getQuotesNotesSummaryEndpoint: string,
+    deleteQuoteNoteEndpoint: (quoteNoteId: number) => string,
     addQuoteNoteEndpoint: string,
     validateQuoteNoteEndpoint: string,
     validateQuoteAuthorEndpoint: string,
@@ -37,8 +33,8 @@ export function quotePage(params: {
     </div>
         <div class="py-4 px-4 lg:px-0">
             <div class="flex justify-between my-4">
-                <div hx-get="${params.getQuotesNotesSummaryEndpoint}" hx-trigger="${TRIGGERS.getNotesSummary} from:body">
-                    ${quoteNotesSummaryComponent(params.notes.length)}
+                <div>
+                    ${quoteNotesSummaryComponent(params.notes.length, false)}
                 </div>
                 <button class="${Views.BUTTON_LIKE_CLASSES} px-12" id="${addNoteButtonId}">${pageTranslations.addQuote}</button>
             </div>
@@ -57,7 +53,7 @@ export function quotePage(params: {
                         ${Views.SUBMIT_FORM_LABEL}="${LABELS.quoteNoteForm}" disabled>
                 </div>
             </form>
-            ${quoteNotesPage(params.notes, params.deletableNoteIds, params.deleteQuoteNoteEndpoint)}
+            ${quoteNotesPage(params.notes, params.deletableNoteIds, params.deleteQuoteNoteEndpoint, false)}
             </div>
         </div>
     </div>
@@ -74,17 +70,21 @@ export function quotePage(params: {
     return params.renderFullPage ? Views.wrappedInMainPage(page, params.currentUser) : page;
 }
 
-export function quoteNotesSummaryComponent(quoteNotes: number): string {
-    return `<p class="text-xl mt-4 mb-4">${Translations.defaultLocale.quotePage.notes} (${quoteNotes})</p>`;
+export function quoteNotesSummaryComponent(quoteNotes: number, withExternalSwap: boolean = true): string {
+    return `<p id="${QUOTE_NOTES_SUMMARY_ID}" ${Views.oobSwapIf(withExternalSwap)}
+        class="text-xl mt-4 mb-4">${Translations.defaultLocale.quotePage.notes} (${quoteNotes})</p>`;
 }
 
 export function quoteNotesPage(quoteNotes: QuoteNoteView[],
     deleteableQuoteNoteIds: number[],
-    deleteQuoteNoteEndpoint: (noteId: number) => string) {
+    deleteQuoteNoteEndpoint: (noteId: number) => string,
+    withSummaryToSwap: boolean) {
 
     const pageTranslations = Translations.defaultLocale.quotePage;
 
-    return `<div id="notes-list" class="space-y-4">
+    return `
+    ${withSummaryToSwap ? quoteNotesSummaryComponent(quoteNotes.length, true) : ""}
+    <div id="notes-list" class="space-y-4">
             ${quoteNotes.map(qn => {
         const noteElementId = `notes-list-element-${qn.noteId}`;
         let deleteEl: string;
@@ -106,7 +106,7 @@ export function quoteNotesPage(quoteNotes: QuoteNoteView[],
                     ${deleteEl}
                 </div>`})
             .join('\n')}
-        </div>`;
+        </div>`.trim();
 }
 
 export class QuoteNoteView {

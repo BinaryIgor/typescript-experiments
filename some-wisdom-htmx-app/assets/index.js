@@ -20,7 +20,6 @@ const HTMX_EVENTS = {
 };
 
 const TRIGGERS = {
-    hideNavigation: "hide-navigation",
     changeRoute: "change-route",
     resetScroll: "reset-scroll",
     formValidated: "form-validated",
@@ -189,10 +188,6 @@ function initEventListeners() {
     //     console.log("Request...", e.detail);
     //     // e.preventDefault();
     // });
-
-    addEventListener(TRIGGERS.hideNavigation, e => {
-        document.getElementById(navigationId).classList.add(HIDDEN_CLASS);
-    });
 
     let lastPath = null;
     let restorablePath = false;

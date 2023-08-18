@@ -9,7 +9,6 @@ import { OptionalErrorCode } from "../shared/errors";
 import { AuthSessions } from "../auth/auth";
 import * as AuthWeb from "../auth/web";
 
-const USER_ENDPOINT = "/user";
 const USER_PROFILE_ENDPOINT = "/user/profile";
 const SIGN_IN_ENDPOINT = "/user/sign-in";
 const SIGN_IN_EXECUTE_ENDPOINT = `${SIGN_IN_ENDPOINT}/execute`;
@@ -20,7 +19,7 @@ const SIGN_OUT_ENDPOINT = "/user/sign-out";
 
 export function build(authSessions: AuthSessions,
     sessionCookies: AuthWeb.SessionCookies,
-    returnHomePage: (req: Request, res: Response) => void): UserModule {
+    returnHomePage: (req: Request, res: Response, withSwappedNavigation: boolean) => void): UserModule {
 
     const userRepository = new InMemoryUserRepository();
 
@@ -30,13 +29,13 @@ export function build(authSessions: AuthSessions,
     const router = Router();
 
     router.get(SIGN_IN_ENDPOINT, (req: Request, res: Response) => {
-        returnSignInPage(req, res);
+        returnSignInPage(req, res, false);
     });
 
-    function returnSignInPage(req: Request, res: Response) {
+    function returnSignInPage(req: Request, res: Response, withNavigationToHide: boolean) {
         Web.returnHtml(res,
             UserViews.signInPage(SIGN_IN_EXECUTE_ENDPOINT, SIGN_IN_VALIDATE_NAME_ENDPOINT, SIGN_IN_VALIDATE_PASSWORD_ENDPOINT,
-                Web.shouldReturnFullPage(req)));
+                withNavigationToHide, Web.shouldReturnFullPage(req)));
     }
 
     router.post(SIGN_IN_VALIDATE_NAME_ENDPOINT, (req: Request, res: Response) => {
@@ -74,9 +73,10 @@ export function build(authSessions: AuthSessions,
 
         sessionCookies.setCookie(res, session);
 
-        Web.setTriggerHeader(res, Views.TRIGGERS.showNavigation);
+        //For proper visibility of home page's navigation
+        AuthWeb.setCurrentUser(req, user);
 
-        returnHomePage(req, res);
+        returnHomePage(req, res, true);
     }));
 
     router.post(SIGN_OUT_ENDPOINT, Web.asyncHandler(async (req: Request, res: Response) => {
@@ -84,14 +84,11 @@ export function build(authSessions: AuthSessions,
         if (session) {
             await authSessions.delete(session);
             sessionCookies.setCookie(res, session, true);
+            //For proper visibility of home page's navigation
+            AuthWeb.setCurrentUser(req, null);
         }
-        Web.setTriggerHeader(res, Views.TRIGGERS.hideNavigation);
-        returnSignInPage(req, res);
+        returnSignInPage(req, res, true);
     }));
-
-    router.get(USER_ENDPOINT, (req: Request, res: Response) => {
-        Web.returnHtml(res, Views.navigationComponent(AuthWeb.currentUserNameOrThrow(req)));
-    });
 
     router.get(USER_PROFILE_ENDPOINT, (req: Request, res: Response) => {
         Web.returnHtml(res, UserViews.profilePage(AuthWeb.currentUserNameOrThrow(req), Web.shouldReturnFullPage(req)));
