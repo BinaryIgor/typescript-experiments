@@ -1,6 +1,7 @@
 import { AppError, Errors } from "../shared/errors";
 import fs from "fs";
 import path from "path";
+import * as Files from "../shared/files";
 
 //TODO: use files utils
 export class AuthSessions {
@@ -29,7 +30,7 @@ export class AuthSessions {
 
     private async sessionFromFile(session: string): Promise<SessionData | null> {
         try {
-            const file = await fs.promises.readFile(this.sessionPath(session), 'utf-8');
+            const file = await Files.textFileContent(this.sessionPath(session));
             return JSON.parse(file) as SessionData;
         } catch (e) {
             console.info("Problem while reading session data...", e);
@@ -51,7 +52,7 @@ export class AuthSessions {
     }
 
     private writeSessionToFile(session: string, data: SessionData): Promise<void> {
-        return fs.promises.writeFile(this.sessionPath(session), JSON.stringify(data));
+        return Files.writeTextFileContent(this.sessionPath(session), JSON.stringify(data));
     }
 
     async refresh(session: string): Promise<void> {
@@ -89,7 +90,7 @@ export class AuthSessions {
     }
 
     async delete(session: string): Promise<void> {
-        return fs.promises.unlink(this.sessionPath(session));
+        return Files.deleteFile(this.sessionPath(session));
     }
 }
 

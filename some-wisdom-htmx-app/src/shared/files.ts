@@ -11,3 +11,7 @@ export function writeTextFileContent(path: string, content: string): Promise<voi
 export function fileExists(path: string): Promise<boolean> {
     return fs.promises.stat(path).catch(e => false).then(e => true);
 }
+
+export function deleteFile(path: string): Promise<void> {
+    return fs.promises.unlink(path);
+}

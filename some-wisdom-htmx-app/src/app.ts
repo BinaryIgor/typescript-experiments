@@ -22,7 +22,7 @@ if (!fs.existsSync(sessionConfig.dir)) {
 }
 
 const authSessions = new AuthSessions(sessionConfig.dir, sessionConfig.dir, sessionConfig.refreshInterval);
-const sessionCookies = new SessionCookies(sessionConfig.dir, "session-id", false);
+const sessionCookies = new SessionCookies(sessionConfig.duration, "session-id", false);
 
 const quoteNotesDbPath = path.join(appConfig.db.path, "__quote-notes.json");
 
