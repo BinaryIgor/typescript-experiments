@@ -2,14 +2,14 @@ import { defineConfig } from 'vitepress'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  title: "Some vitepress blog",
-  description: "Some vitepress blog",
+  title: "Binary Igor",
+  description: "Some musings about binary machines by Igor Roztropiński.",
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Examples', link: '/markdown-examples' },
-      { text: "New articile", link: '/new-article' }
+      { text: "Reduce the search space", link: '/reduce-the-search-space' }
     ],
 
     sidebar: [

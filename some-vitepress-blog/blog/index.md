@@ -3,9 +3,9 @@
 layout: home
 
 hero:
-  name: "Some vitepress blog"
-  text: "Some vitepress blog"
-  tagline: My great project tagline
+  name: "Binary Igor"
+  # text: "Some musings about binary machines by Igor Roztropiński."
+  tagline: "Some musings about binary machines by Igor Roztropiński"
   actions:
     - theme: brand
       text: Markdown Examples
