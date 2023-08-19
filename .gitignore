@@ -2,3 +2,7 @@
 **/dist
 # created by users quote notes db
 **/__quote-notes.json
+
+# vitepress
+**/.vitepress/cache
+**/.vitepress/dist
